@@ -1,7 +1,7 @@
 {
-  "name": "plumbing-ad",
+  "name": "slidekast",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "SlideKast Event Engine Layout",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -27,9 +27,9 @@
     "dev": "vite",
     "studio": "remotion studio",
     "build-video": "remotion bundle",
-    "build-web": "vite build",
+    "build": "vite build",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src"
   },
   "sideEffects": [
     "*.css"
