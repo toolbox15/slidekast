@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import GuestUploadForm from './GuestUploadForm';
-import FuneralSlideshow from './FuneralSlideshow';
+import { FuneralSlideshow } from './FuneralSlideshow';
 
 // Quick check to see what page the browser is trying to look at
 const currentPath = window.location.pathname;
