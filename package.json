@@ -1,0 +1,37 @@
+{
+  "name": "plumbing-ad",
+  "version": "1.0.0",
+  "description": "My Remotion video",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.465",
+    "@remotion/tailwind-v4": "4.0.465",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.465",
+    "tailwindcss": "4.0.0"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.465",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "@vitejs/plugin-react": "^6.0.2",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "vite": "^8.0.16"
+  },
+  "scripts": {
+    "dev": "vite",
+    "studio": "remotion studio",
+    "build-video": "remotion bundle",
+    "build-web": "vite build",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}
