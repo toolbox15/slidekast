@@ -1,5 +1,4 @@
-import { AbsoluteFill, Img, interpolate, useCurrentFrame } from 'remotion';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { CinematicPhotoSlide } from './CinematicPhotoSlide';
 import { useLiveTributes } from '../useLiveTributes'; 
 import {
@@ -13,6 +12,18 @@ import {
 } from './memorialUtils';
 
 const LIVE_LOWER_THIRD_FRAMES = 540;
+
+// Recreating Remotion's interpolate function using pure JavaScript math
+const linearInterpolate = (value, inputRange, outputRange, options = {}) => {
+  const [inputMin, inputMax] = inputRange;
+  const [outputMin, outputMax] = outputRange;
+  
+  if (value <= inputMin) return options.extrapolateLeft === 'clamp' ? outputMin : value;
+  if (value >= inputMax) return options.extrapolateRight === 'clamp' ? outputMax : value;
+  
+  const percentage = (value - inputMin) / (inputMax - inputMin);
+  return outputMin + percentage * (outputMax - outputMin);
+};
 
 const buildPlaybackItems = (timeline) => {
   const items = [];
@@ -62,7 +73,7 @@ const getVisiblePlaybackItems = (items, totalDuration, frame) => {
   const safeActiveIndex = activeIndex === -1 ? 0 : activeIndex;
   const active = items[safeActiveIndex];
   const activeFrame = loopFrame - active.start;
-  const incomingOpacity = interpolate(activeFrame, [0, TRANSITION_FRAMES], [0, 1], {
+  const incomingOpacity = linearInterpolate(activeFrame, [0, TRANSITION_FRAMES], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -91,18 +102,20 @@ const getVisiblePlaybackItems = (items, totalDuration, frame) => {
 };
 
 const SectionTitleCard = ({ section, frame, opacity }) => {
-  const titleY = interpolate(frame, [0, 44], [42, 0], {
+  const titleY = linearInterpolate(frame, [0, 44], [42, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const ruleWidth = interpolate(frame, [16, 66], [0, 420], {
+  const ruleWidth = linearInterpolate(frame, [16, 66], [0, 420], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: 'absolute',
+        inset: 0,
         opacity,
         display: 'flex',
         alignItems: 'center',
@@ -151,7 +164,7 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
           {section.subtitle}
         </div>
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
 
@@ -167,8 +180,7 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-const LiveTributeLowerThird = ({ uploads }) => {
-  const frame = useCurrentFrame();
+const LiveTributeLowerThird = ({ uploads, frame }) => {
   const liveUploads = useMemo(
     () =>
       uploads.length > 0
@@ -187,7 +199,7 @@ const LiveTributeLowerThird = ({ uploads }) => {
   const activeUpload = liveUploads[activeIndex];
   const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
   const imageSource = resolveImageSource(activeUpload.image_url);
-  const translateX = interpolate(
+  const translateX = linearInterpolate(
     itemFrame,
     [0, LIVE_LOWER_THIRD_FRAMES],
     [-980, 1980],
@@ -196,7 +208,7 @@ const LiveTributeLowerThird = ({ uploads }) => {
       extrapolateRight: 'clamp',
     }
   );
-  const translateY = interpolate(
+  const translateY = linearInterpolate(
     itemFrame,
     [0, LIVE_LOWER_THIRD_FRAMES / 2, LIVE_LOWER_THIRD_FRAMES],
     [14, -18, 14],
@@ -205,7 +217,7 @@ const LiveTributeLowerThird = ({ uploads }) => {
       extrapolateRight: 'clamp',
     }
   );
-  const opacity = interpolate(
+  const opacity = linearInterpolate(
     itemFrame,
     [0, 54, LIVE_LOWER_THIRD_FRAMES - 64, LIVE_LOWER_THIRD_FRAMES],
     [0, 1, 1, 0],
@@ -216,8 +228,11 @@ const LiveTributeLowerThird = ({ uploads }) => {
   );
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
         justifyContent: 'flex-end',
         pointerEvents: 'none',
       }}
@@ -270,13 +285,14 @@ const LiveTributeLowerThird = ({ uploads }) => {
           }}
         >
           {imageSource ? (
-            <Img
+            <img
               src={imageSource}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
               }}
+              alt=""
             />
           ) : (
             <div
@@ -322,17 +338,18 @@ const LiveTributeLowerThird = ({ uploads }) => {
           </div>
         </div>
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
 
-const Background = ({ funeralHomeName, lovedOneName }) => {
-  const frame = useCurrentFrame();
-  const shimmer = interpolate(frame % 180, [0, 90, 180], [0.18, 0.34, 0.18]);
+const Background = ({ funeralHomeName, lovedOneName, frame }) => {
+  const shimmer = linearInterpolate(frame % 180, [0, 90, 180], [0.18, 0.34, 0.18]);
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: 'absolute',
+        inset: 0,
         background:
           'radial-gradient(circle at 16% 18%, rgba(154,178,177,0.26), transparent 24%), radial-gradient(circle at 86% 76%, rgba(217,191,141,0.18), transparent 28%), linear-gradient(135deg, #101417 0%, #243136 48%, #121517 100%)',
       }}
@@ -383,7 +400,7 @@ const Background = ({ funeralHomeName, lovedOneName }) => {
       >
         {lovedOneName}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
 
@@ -448,7 +465,28 @@ export const MemorialSlideshowController = ({
   legacyPhotos = [],
   liveTributesSeed = [],
 }) => {
-  const frame = useCurrentFrame();
+  // Creating a native browser clock running at roughly 30 frames per second
+  const [frame, setFrame] = useState(0);
+  const lastTimeRef = useRef(Date.now());
+
+  useEffect(() => {
+    let animationFrameId;
+    
+    const renderLoop = () => {
+      const now = Date.now();
+      const elapsed = now - lastTimeRef.current;
+      
+      // Advance 1 video frame frame every ~33 milliseconds
+      if (elapsed >= 33) {
+        setFrame((prev) => prev + 1);
+        lastTimeRef.current = now - (elapsed % 33);
+      }
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+    
+    animationFrameId = requestAnimationFrame(renderLoop);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
 
   const { tributes } = useLiveTributes(liveEventId);
   const lowerThirdUploads = useMemo(
@@ -477,14 +515,17 @@ export const MemorialSlideshowController = ({
   );
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: 'absolute',
+        inset: 0,
         color: '#f8fafc',
         fontFamily: 'Arial, sans-serif',
         overflow: 'hidden',
+        background: '#101417'
       }}
     >
-      <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} />
+      <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
       {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
         item.type === 'title' ? (
           <SectionTitleCard
@@ -503,7 +544,7 @@ export const MemorialSlideshowController = ({
           />
         )
       )}
-      <LiveTributeLowerThird uploads={lowerThirdUploads} />
-    </AbsoluteFill>
+      <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+    </div>
   );
 };
