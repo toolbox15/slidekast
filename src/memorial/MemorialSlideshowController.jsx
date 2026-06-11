@@ -13,7 +13,6 @@ import {
 
 const LIVE_LOWER_THIRD_FRAMES = 540;
 
-// Recreating Remotion's interpolate function using pure JavaScript math
 const linearInterpolate = (value, inputRange, outputRange, options = {}) => {
   const [inputMin, inputMax] = inputRange;
   const [outputMin, outputMax] = outputRange;
@@ -64,9 +63,7 @@ const buildPlaybackItems = (timeline) => {
 };
 
 const getVisiblePlaybackItems = (items, totalDuration, frame) => {
-  if (items.length === 0 || totalDuration <= 0) {
-    return [];
-  }
+  if (items.length === 0 || totalDuration <= 0) return [];
 
   const loopFrame = frame % totalDuration;
   const activeIndex = items.findIndex((item) => loopFrame >= item.start && loopFrame < item.end);
@@ -101,6 +98,7 @@ const getVisiblePlaybackItems = (items, totalDuration, frame) => {
   return visible;
 };
 
+// Section Title Card now fits securely inside Zone 1 bounds
 const SectionTitleCard = ({ section, frame, opacity }) => {
   const titleY = linearInterpolate(frame, [0, 44], [42, 0], {
     extrapolateLeft: 'clamp',
@@ -121,46 +119,19 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
+        padding: '20px',
+        boxSizing: 'border-box'
       }}
     >
-      <div style={{ width: 1120 }}>
-        <div
-          style={{
-            color: '#d9bf8d',
-            fontSize: 24,
-            letterSpacing: 7,
-            textTransform: 'uppercase',
-            marginBottom: 28,
-          }}
-        >
+      <div style={{ maxWidth: '90%', width: '1120px' }}>
+        <div style={{ color: '#d9bf8d', fontSize: '20px', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '20px' }}>
           {section.eyebrow}
         </div>
-        <div
-          style={{
-            fontFamily: 'Georgia, serif',
-            fontSize: 94,
-            lineHeight: 1.02,
-            fontWeight: 400,
-            transform: `translateY(${titleY}px)`,
-          }}
-        >
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(32px, 6vw, 84px)', lineHeight: 1.1, fontWeight: 400, transform: `translateY(${titleY}px)` }}>
           {section.title}
         </div>
-        <div
-          style={{
-            width: ruleWidth,
-            height: 2,
-            background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)',
-            margin: '34px auto',
-          }}
-        />
-        <div
-          style={{
-            fontSize: 30,
-            lineHeight: 1.36,
-            color: 'rgba(255,255,255,0.78)',
-          }}
-        >
+        <div style={{ width: ruleWidth, height: '2px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '24px auto' }} />
+        <div style={{ fontSize: 'clamp(16px, 2vw, 24px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.78)' }}>
           {section.subtitle}
         </div>
       </div>
@@ -180,160 +151,98 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
+// Rebuilt Live Tribute Component: Locked cleanly inside its assigned 20% viewport footprint
 const LiveTributeLowerThird = ({ uploads, frame }) => {
   const liveUploads = useMemo(
-    () =>
-      uploads.length > 0
-        ? uploads
-        : [
-            {
-              id: 'awaiting-live-tribute',
-              image_url: '',
-              sender_name: 'Guestbook',
-              message_text: 'Your memories will appear here.',
-            },
-          ],
+    () => uploads.length > 0 ? uploads : [{
+      id: 'awaiting-live-tribute',
+      image_url: '',
+      sender_name: 'Guestbook',
+      message_text: 'Your memories will appear here.',
+    }],
     [uploads]
   );
+
   const activeIndex = Math.floor(frame / LIVE_LOWER_THIRD_FRAMES) % liveUploads.length;
   const activeUpload = liveUploads[activeIndex];
   const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
   const imageSource = resolveImageSource(activeUpload.image_url);
-  const translateX = linearInterpolate(
-    itemFrame,
-    [0, LIVE_LOWER_THIRD_FRAMES],
-    [-980, 1980],
-    {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    }
-  );
-  const translateY = linearInterpolate(
-    itemFrame,
-    [0, LIVE_LOWER_THIRD_FRAMES / 2, LIVE_LOWER_THIRD_FRAMES],
-    [14, -18, 14],
-    {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    }
-  );
-  const opacity = linearInterpolate(
-    itemFrame,
-    [0, 54, LIVE_LOWER_THIRD_FRAMES - 64, LIVE_LOWER_THIRD_FRAMES],
-    [0, 1, 1, 0],
-    {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    }
-  );
+
+  // Dynamic crawl boundaries calculation
+  const translateX = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES], [-1100, 1100], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  
+  const translateY = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES / 2, LIVE_LOWER_THIRD_FRAMES], [10, -10, 10], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = linearInterpolate(itemFrame, [0, 54, LIVE_LOWER_THIRD_FRAMES - 64, LIVE_LOWER_THIRD_FRAMES], [0, 1, 1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <div
       style={{
-        position: 'absolute',
-        inset: 0,
+        width: '100%',
+        height: '100%',
+        position: 'relative',
         display: 'flex',
-        justifyContent: 'flex-end',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(90deg, rgba(10,14,16,0.18), rgba(10,14,16,0.85) 18%, rgba(10,14,16,0.9) 50%, rgba(10,14,16,0.85) 82%, rgba(10,14,16,0.18))',
+        borderTop: '1px solid rgba(217,191,141,0.28)',
+        boxShadow: '0 -15px 50px rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(12px)',
+        overflow: 'hidden',
         pointerEvents: 'none',
       }}
     >
       <div
         style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 60,
-          height: 218,
-          background:
-            'linear-gradient(90deg, rgba(10,14,16,0.18), rgba(10,14,16,0.76) 18%, rgba(10,14,16,0.82) 50%, rgba(10,14,16,0.76) 82%, rgba(10,14,16,0.18))',
-          borderTop: '1px solid rgba(217,191,141,0.28)',
-          borderBottom: '1px solid rgba(255,255,255,0.11)',
-          boxShadow: '0 -20px 70px rgba(0,0,0,0.28)',
-          backdropFilter: 'blur(12px)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 86,
-          width: 900,
-          minHeight: 164,
+          width: 'min(90%, 850px)',
+          minHeight: '110px',
           opacity,
           transform: `translate(${translateX}px, ${translateY}px)`,
           display: 'flex',
           alignItems: 'center',
-          gap: 30,
-          padding: '24px 34px',
-          background: 'rgba(18,23,25,0.92)',
+          gap: '20px',
+          padding: '16px 24px',
+          background: 'rgba(18,23,25,0.95)',
           border: '1px solid rgba(217,191,141,0.42)',
-          boxShadow: '0 22px 54px rgba(0,0,0,0.34)',
-          borderRadius: 8,
+          boxShadow: '0 15px 35px rgba(0,0,0,0.4)',
+          borderRadius: '8px',
+          boxSizing: 'border-box'
         }}
       >
         <div
           style={{
-            width: 112,
-            height: 112,
-            flex: '0 0 112px',
+            width: '75px',
+            height: '75px',
+            flex: '0 0 75px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.18)',
-            borderRadius: 6,
+            borderRadius: '6px',
           }}
         >
           {imageSource ? (
-            <img
-              src={imageSource}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
-              alt=""
-            />
+            <img src={imageSource} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
           ) : (
-            <div
-              style={{
-                color: 'rgba(255,255,255,0.52)',
-                fontFamily: 'Georgia, serif',
-                fontSize: 36,
-              }}
-            >
-              +
-            </div>
+            <div style={{ color: 'rgba(255,255,255,0.52)', fontFamily: 'Georgia, serif', fontSize: '24px' }}>+</div>
           )}
         </div>
-        <div
-          style={{
-            minWidth: 0,
-            flex: 1,
-          }}
-        >
-          <div
-            style={{
-              color: '#d9bf8d',
-              fontFamily: 'Georgia, serif',
-              fontSize: 36,
-              lineHeight: 1.04,
-              marginBottom: 10,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '22px', lineHeight: 1.1, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {activeUpload.sender_name || 'Guest'}
           </div>
-          <div
-            style={{
-              color: 'rgba(255,255,255,0.88)',
-              fontSize: 28,
-              lineHeight: 1.24,
-              fontWeight: 300,
-            }}
-          >
+          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '16px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {activeUpload.message_text || 'Shared a memory in loving tribute.'}
           </div>
         </div>
@@ -346,69 +255,20 @@ const Background = ({ funeralHomeName, lovedOneName, frame }) => {
   const shimmer = linearInterpolate(frame % 180, [0, 90, 180], [0.18, 0.34, 0.18]);
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background:
-          'radial-gradient(circle at 16% 18%, rgba(154,178,177,0.26), transparent 24%), radial-gradient(circle at 86% 76%, rgba(217,191,141,0.18), transparent 28%), linear-gradient(135deg, #101417 0%, #243136 48%, #121517 100%)',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 52,
-          border: '1px solid rgba(255,255,255,0.14)',
-          boxShadow: 'inset 0 0 140px rgba(0,0,0,0.22)',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 156,
-          width: 3,
-          height: '100%',
-          background:
-            'linear-gradient(to bottom, transparent, rgba(255,255,255,0.32), transparent)',
-          opacity: shimmer,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          left: 82,
-          bottom: 56,
-          color: 'rgba(255,255,255,0.58)',
-          fontSize: 20,
-          letterSpacing: 3,
-          textTransform: 'uppercase',
-        }}
-      >
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 16% 18%, rgba(154,178,177,0.26), transparent 24%), radial-gradient(circle at 86% 76%, rgba(217,191,141,0.18), transparent 28%), linear-gradient(135deg, #101417 0%, #243136 48%, #121517 100%)', zIndex: -1 }}>
+      <div style={{ position: 'absolute', inset: '3%', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 0 140px rgba(0,0,0,0.22)' }} />
+      <div style={{ position: 'absolute', top: 0, right: '15%', width: '2px', height: '100%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.32), transparent)', opacity: shimmer }} />
+      <div style={{ position: 'absolute', left: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
         {funeralHomeName}
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          right: 82,
-          bottom: 56,
-          color: 'rgba(255,255,255,0.58)',
-          fontSize: 20,
-          letterSpacing: 3,
-          textTransform: 'uppercase',
-        }}
-      >
+      <div style={{ position: 'absolute', right: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
         {lovedOneName}
       </div>
     </div>
   );
 };
 
-const buildSections = ({
-  earlyYearsPhotos,
-  familyPhotos,
-  legacyPhotos,
-}) => {
+const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
   return [
     {
       id: 'early-years',
@@ -416,9 +276,7 @@ const buildSections = ({
       title: 'The Early Years',
       subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      photos: earlyYearsPhotos.map((photo, index) =>
-        normalizePhoto(photo, `Early Years ${index + 1}`)
-      ),
+      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto(photo, `Early Years ${index + 1}`)),
     },
     {
       id: 'life-and-family',
@@ -426,9 +284,7 @@ const buildSections = ({
       title: 'Building a Life & Family',
       subtitle: 'The chapters of partnership, parenthood, home, work, and milestones.',
       frameShape: 'rounded',
-      photos: familyPhotos.map((photo, index) =>
-        normalizePhoto(photo, `Family Chapter ${index + 1}`)
-      ),
+      photos: familyPhotos.map((photo, index) => normalizePhoto(photo, `Family Chapter ${index + 1}`)),
     },
     {
       id: 'lasting-legacy',
@@ -436,23 +292,13 @@ const buildSections = ({
       title: 'A Lasting Legacy',
       subtitle: 'Recent moments, grandchildren, friendships, service, and community impact.',
       frameShape: 'oval',
-      photos: legacyPhotos.map((photo, index) =>
-        normalizePhoto(photo, `Legacy Moment ${index + 1}`)
-      ),
+      photos: legacyPhotos.map((photo, index) => normalizePhoto(photo, `Legacy Moment ${index + 1}`)),
     },
   ].map((section) => ({
     ...section,
-    photos:
-      section.photos.length > 0
-        ? section.photos
-        : [
-            {
-              image_url: '',
-              caption: section.title,
-              sender_name: '',
-              message_text: '',
-            },
-          ],
+    photos: section.photos.length > 0 ? section.photos : [
+      { image_url: '', caption: section.title, sender_name: '', message_text: '' }
+    ],
   }));
 };
 
@@ -465,86 +311,72 @@ export const MemorialSlideshowController = ({
   legacyPhotos = [],
   liveTributesSeed = [],
 }) => {
-  // Creating a native browser clock running at roughly 30 frames per second
   const [frame, setFrame] = useState(0);
   const lastTimeRef = useRef(Date.now());
 
   useEffect(() => {
     let animationFrameId;
-    
     const renderLoop = () => {
       const now = Date.now();
       const elapsed = now - lastTimeRef.current;
-      
-      // Advance 1 video frame frame every ~33 milliseconds
       if (elapsed >= 33) {
         setFrame((prev) => prev + 1);
         lastTimeRef.current = now - (elapsed % 33);
       }
       animationFrameId = requestAnimationFrame(renderLoop);
     };
-    
     animationFrameId = requestAnimationFrame(renderLoop);
     return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
   const { tributes } = useLiveTributes(liveEventId);
   const lowerThirdUploads = useMemo(
-    () =>
-      (tributes.length > 0 ? tributes : liveTributesSeed).map((upload, index) =>
-        normalizeUpload(upload, index)
-      ),
+    () => (tributes.length > 0 ? tributes : liveTributesSeed).map((upload, index) => normalizeUpload(upload, index)),
     [tributes, liveTributesSeed]
   );
 
   const sections = useMemo(
-    () =>
-      buildSections({
-        earlyYearsPhotos,
-        familyPhotos,
-        legacyPhotos,
-      }),
+    () => buildSections({ earlyYearsPhotos, familyPhotos, legacyPhotos }),
     [earlyYearsPhotos, familyPhotos, legacyPhotos]
   );
   
   const timeline = useMemo(() => buildTimeline(sections), [sections]);
   const { items, totalDuration } = useMemo(() => buildPlaybackItems(timeline), [timeline]);
-  const visibleItems = useMemo(
-    () => getVisiblePlaybackItems(items, totalDuration, frame),
-    [items, totalDuration, frame]
-  );
+  const visibleItems = useMemo(() => getVisiblePlaybackItems(items, totalDuration, frame), [items, totalDuration, frame]);
 
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         color: '#f8fafc',
         fontFamily: 'Arial, sans-serif',
         overflow: 'hidden',
-        background: '#101417'
+        background: '#101417',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100vw',
+        height: '100vh',
+        boxSizing: 'border-box'
       }}
     >
       <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
-      {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
-        item.type === 'title' ? (
-          <SectionTitleCard
-            key={`${item.id}-${item.start}`}
-            section={item.section}
-            frame={itemFrame}
-            opacity={opacity}
-          />
-        ) : (
-          <SectionPhotoPlayer
-            key={`${item.id}-${item.start}`}
-            item={item}
-            slideFrame={itemFrame}
-            opacity={opacity}
-            isEntering={isEntering}
-          />
-        )
-      )}
-      <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+      
+      {/* ZONE 1: CORE PRESENTATION WORKSPACE (Takes up exactly 80% vertical height) */}
+      <div style={{ flex: '0 0 80%', width: '100%', position: 'relative', overflow: 'hidden' }}>
+        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
+          item.type === 'title' ? (
+            <SectionTitleCard key={`${item.id}-${item.start}`} section={item.section} frame={itemFrame} opacity={opacity} />
+          ) : (
+            <SectionPhotoPlayer key={`${item.id}-${item.start}`} item={item} slideFrame={itemFrame} opacity={opacity} isEntering={isEntering} />
+          )
+        )}
+      </div>
+
+      {/* ZONE 2: RUNNING LOWER THIRD COMPONENT (Takes up exactly 20% vertical height) */}
+      <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
+        <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+      </div>
     </div>
   );
 };
