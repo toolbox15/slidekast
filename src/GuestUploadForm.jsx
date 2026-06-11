@@ -133,6 +133,33 @@ export default function GuestUploadForm({ eventId = "demo-event" }) {
         </button>
 
       </form>
+
+      {/* Embedded SlideKast Lead Generation Footer Link */}
+      <div style={{ textAlign: 'center', marginTop: '35px', paddingBottom: '10px' }}>
+        <a 
+          href="https://slidekast.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          style={{ 
+            fontSize: '11px', 
+            color: '#777', 
+            textDecoration: 'none', 
+            letterSpacing: '2px', 
+            textTransform: 'uppercase', 
+            fontWeight: '500',
+            transition: 'color 0.2s, letter-spacing 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.color = '#d9bf8d'; // Transitions to gold brand accent on desktop hover
+          }} 
+          onMouseLeave={(e) => {
+            e.target.style.color = '#777';
+          }}
+        >
+          Powered by <span style={{ fontWeight: 'bold' }}>SlideKast</span>
+        </a>
+      </div>
+
     </div>
   );
 }
