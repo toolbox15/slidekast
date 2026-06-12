@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import GuestUploadForm from './GuestUploadForm';
 import DirectorAdminForm from './DirectorAdminForm';
 import { FuneralSlideshow } from './FuneralSlideshow';
-import { db } from './firebaseConfig'; // Aligned to use your project's exact config path
+import { db } from './firebaseConfig'; 
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const MainApp = () => {
@@ -13,12 +13,18 @@ const MainApp = () => {
   const isDisplayPage = pathSegments[1] === 'display';
   const isAdminPage = pathSegments[1] === 'admin';
 
-  // 2. Set initial authorization state
+  // 2. Set initial authorization and photo state
   const [eventStatus, setEventStatus] = useState({ loading: true, active: true, error: false });
+  
+  // NEW: State to hold the arrays pulled from Firestore
+  const [eventPhotos, setEventPhotos] = useState({
+    earlyYearsPhotos: [],
+    familyPhotos: [],
+    legacyPhotos: []
+  });
 
-  // 3. Real-Time Security Guard Check
+  // 3. Real-Time Security Guard Check & Data Fetch
   useEffect(() => {
-    // If it's a generic landing without an event ID, pass it through safely
     if (eventId === 'default-event') {
       setEventStatus({ loading: false, active: true, error: false });
       return;
@@ -26,24 +32,25 @@ const MainApp = () => {
 
     const docRef = doc(db, 'events', eventId);
     
-    // Listen to the event's control document in real time
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const now = new Date();
         const expirationDate = data.expiresAt ? new Date(data.expiresAt) : null;
         
-        // KILL-SWITCH INTERCEPTOR RULES:
-        // Triggers lock if: 1. Manual flag 'isActive' is set to false
-        // OR 2. An expiration timestamp exists and the current time is past it
+        // GRAB THE PHOTOS FROM FIRESTORE AND SAVE THEM TO STATE
+        setEventPhotos({
+          earlyYearsPhotos: data.earlyYearsPhotos || [],
+          familyPhotos: data.familyPhotos || [],
+          legacyPhotos: data.legacyPhotos || []
+        });
+
         if (data.isActive === false || (expirationDate && now > expirationDate)) {
           setEventStatus({ loading: false, active: false, error: false });
         } else {
           setEventStatus({ loading: false, active: true, error: false });
         }
       } else {
-        // If the document doesn't exist yet, let it pass so the director can 
-        // organically auto-create the collection upon their first photo upload
         setEventStatus({ loading: false, active: true, error: false });
       }
     }, (error) => {
@@ -54,7 +61,6 @@ const MainApp = () => {
     return () => unsubscribe();
   }, [eventId]);
 
-  // Loading screen displayed while verifying security parameters
   if (eventStatus.loading) {
     return (
       <div style={{ background: '#101417', color: '#d9bf8d', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', letterSpacing: '1px' }}>
@@ -63,7 +69,6 @@ const MainApp = () => {
     );
   }
 
-  // THE LOCK SCREEN: What vendors, venues, or guests see instantly if unpaid or expired
   if (!eventStatus.active) {
     return (
       <div style={{ background: '#101417', color: '#f8fafc', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', padding: '20px', textAlign: 'center' }}>
@@ -85,7 +90,14 @@ const MainApp = () => {
   return (
     <div style={{ minHeight: '100vh', width: '100vw', margin: 0, padding: 0, background: '#101417', color: '#f8fafc' }}>
       {isDisplayPage ? (
-        <FuneralSlideshow eventId={eventId} liveEventId={eventId} />
+        // PASS THE FIRESTORE DATA DOWN AS PROPS
+        <FuneralSlideshow 
+          eventId={eventId} 
+          liveEventId={eventId} 
+          earlyYearsPhotos={eventPhotos.earlyYearsPhotos}
+          familyPhotos={eventPhotos.familyPhotos}
+          legacyPhotos={eventPhotos.legacyPhotos}
+        />
       ) : isAdminPage ? (
         <DirectorAdminForm eventId={eventId} />
       ) : (
