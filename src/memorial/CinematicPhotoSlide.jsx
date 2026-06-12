@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, interpolate } from "remotion";
+import { interpolate } from "remotion";
 import React from "react";
 import { HandwritingMessage } from "./HandwritingMessage";
 import {
@@ -47,16 +47,19 @@ export const CinematicPhotoSlide = ({
   const handwritingFrame = Math.max(0, textFrame - 4);
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: "absolute",
+        inset: 0,
         overflow: "hidden",
         opacity,
         backgroundColor: "#101417",
       }}
     >
       {imgUrl ? (
-        <Img
+        <img
           src={imgUrl}
+          alt={caption}
           style={{
             position: "absolute",
             inset: -34,
@@ -99,8 +102,9 @@ export const CinematicPhotoSlide = ({
           }}
         >
           {imgUrl ? (
-            <Img
+            <img
               src={imgUrl}
+              alt={caption}
               style={{
                 display: "block",
                 maxWidth: "100%",
@@ -198,6 +202,6 @@ export const CinematicPhotoSlide = ({
           </>
         )}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
