@@ -98,7 +98,7 @@ const getVisiblePlaybackItems = (items, totalDuration, frame) => {
   return visible;
 };
 
-// Section Title Card now fits securely inside Zone 1 bounds
+// Section Title Card fits securely inside Zone 1 bounds
 const SectionTitleCard = ({ section, frame, opacity }) => {
   const titleY = linearInterpolate(frame, [0, 44], [42, 0], {
     extrapolateLeft: 'clamp',
@@ -268,6 +268,7 @@ const Background = ({ funeralHomeName, lovedOneName, frame }) => {
   );
 };
 
+// FIXED: Maps raw string URLs out of Firestore into the structured objects expected by normalizePhoto
 const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
   return [
     {
@@ -276,7 +277,7 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'The Early Years',
       subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto(photo, `Early Years ${index + 1}`)),
+      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
     },
     {
       id: 'life-and-family',
@@ -284,7 +285,7 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'Building a Life & Family',
       subtitle: 'The chapters of partnership, parenthood, home, work, and milestones.',
       frameShape: 'rounded',
-      photos: familyPhotos.map((photo, index) => normalizePhoto(photo, `Family Chapter ${index + 1}`)),
+      photos: familyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Family Chapter ${index + 1}`)),
     },
     {
       id: 'lasting-legacy',
@@ -292,7 +293,7 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'A Lasting Legacy',
       subtitle: 'Recent moments, grandchildren, friendships, service, and community impact.',
       frameShape: 'oval',
-      photos: legacyPhotos.map((photo, index) => normalizePhoto(photo, `Legacy Moment ${index + 1}`)),
+      photos: legacyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Legacy Moment ${index + 1}`)),
     },
   ].map((section) => ({
     ...section,
