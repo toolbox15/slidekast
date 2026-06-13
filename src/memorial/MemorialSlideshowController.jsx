@@ -141,7 +141,7 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   return (
     <CinematicPhotoSlide
-      photo={photo}
+      photo={item.photo} // FIXED: Correctly targeting item.photo instead of the undefined standalone variable
       frame={slideFrame}
       slideIndex={item.slideIndex}
       frameShape={item.section.frameShape}
@@ -232,7 +232,6 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'The Early Years',
       subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      // TYPO FIXED: Corrected mapping directly back to the proper earlyYearsPhotos variable array
       photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
     },
     {
