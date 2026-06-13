@@ -151,32 +151,37 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// --- SCALABLE DISPERSION SPARK COMPONENT ---
-const CrossParticleSpark = ({ angle, delay, distance }) => {
+// --- MINIATURE FRACTURED CROSS PARTICLE ---
+const MiniCrossParticle = ({ angle, delay, distance, scale, rotationSpeed }) => {
   const cos = Math.cos((angle * Math.PI) / 180);
   const sin = Math.sin((angle * Math.PI) / 180);
+  // Calculate a dynamic outward burst path that driftingly drifts upwards over time
   const targetX = (distance * cos).toFixed(1);
-  const targetY = (distance * sin - 80).toFixed(1); // Drives the direction upward
+  const targetY = (distance * sin - 120).toFixed(1); // Drifts significantly higher as it dissolves
 
   return (
-    <div
+    <svg
+      viewBox="0 0 24 24"
       style={{
         position: 'absolute',
-        top: '20px',
+        top: '2px',
         left: '100%',
         marginLeft: '12px',
-        width: '4px',
-        height: '4px',
-        backgroundColor: '#d9bf8d',
-        borderRadius: '50%',
-        boxShadow: '0 0 6px #d9bf8d, 0 0 12px #ffffff',
+        width: '12px',  // Smaller fractured profile pieces
+        height: '12px',
+        fill: '#d9bf8d',
+        filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.7))',
         pointerEvents: 'none',
-        animation: `sparkScatter 1.4s cubic-bezier(0.1, 0.8, 0.3, 1) ${delay}s forwards`,
+        animation: `crossDissolve 1.8s cubic-bezier(0.165, 0.84, 0.44, 1) ${delay}s forwards`,
         opacity: 0,
         '--tx': `${targetX}px`,
         '--ty': `${targetY}px`,
+        '--rot': `${rotationSpeed}deg`,
+        transform: `scale(${scale})`,
       }}
-    />
+    >
+      <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
+    </svg>
   );
 };
 
@@ -231,7 +236,6 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
   }));
 };
 
-// LIVE LOWER THIRD WITH CONTEXT PARTICLE DISPERSION ENGINE
 const LiveTributeLowerThird = ({ uploads, frame }) => {
   const seenMessageIds = useRef(new Set());
   const currentMessageIdRef = useRef(null);
@@ -252,7 +256,6 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
   const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
   const imageSource = resolveImageSource(activeUpload.image_url);
 
-  // EVALUATE UNIQUE RUN SELECTION HISTORIES 
   if (activeUpload && activeUpload.id !== currentMessageIdRef.current) {
     currentMessageIdRef.current = activeUpload.id;
     if (!seenMessageIds.current.has(activeUpload.id)) {
@@ -263,13 +266,11 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     }
   }
 
-  // CALCULATE SCREEN GRID TRANSLATIONS (From -1100 to 1100)
   const translateX = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES], [-1100, 1100], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // EXACT SCREEN CENTER TRACKER: Triggers precisely at the midpoint of the card's lifecycle
   const hasReachedCenter = translateX >= 0;
   const shouldDisperse = isFirstTime && hasReachedCenter;
 
@@ -283,8 +284,8 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     extrapolateRight: 'clamp',
   });
 
-  // Standard Spark Angle Array
-  const sparkAngles = [30, 60, 90, 120, 150, 210, 240, 270, 300, 330];
+  // Angles mapped out to spray upwards and outwards elegantly (between 200 and 340 degrees)
+  const crossAngles = [210, 235, 255, 270, 285, 305, 330, 250, 290];
 
   return (
     <div
@@ -303,15 +304,17 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         pointerEvents: 'none',
       }}
     >
+      {/* SHATTER AND DISSOLVE KEYFRAMES */}
       <style>{`
-        @keyframes sparkScatter {
+        @keyframes crossDissolve {
           0% {
-            transform: translate(0, 0) scale(1);
+            transform: translate(0, 0) scale(0.6) rotate(0deg);
             opacity: 1;
           }
           100% {
-            transform: translate(var(--tx), var(--ty)) scale(0.1);
+            transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--rot));
             opacity: 0;
+            filter: drop-shadow(0 0 10px rgba(217,191,141,0));
           }
         }
       `}</style>
@@ -363,7 +366,6 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
               {activeUpload.sender_name || 'Guest'}
             </span>
 
-            {/* ANCHOR PLACEMENT MATRIX */}
             <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
               <svg
                 viewBox="0 0 24 24"
@@ -374,21 +376,22 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                   marginLeft: '12px',
                   marginBottom: '2px',
                   filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
-                  transition: 'opacity 0.15s ease-out',
-                  // Dissolves vector shapes to 0 instant execution center burst targets
+                  transition: 'opacity 0.1s ease-out',
                   opacity: shouldDisperse ? 0 : 1, 
                 }}
               >
                 <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
               </svg>
 
-              {/* RENDER DYNAMIC EMISSION PARTICLES WHEN MIDPOINT CONTEXT TRIGGERS */}
-              {shouldDisperse && sparkAngles.map((angle, idx) => (
-                <CrossParticleSpark 
-                  key={`${activeUpload.id}-spark-${idx}`} 
+              {/* SHATTER EFFECT: Generates micro golden crosses that burst outward and fade away */}
+              {shouldDisperse && crossAngles.map((angle, idx) => (
+                <MiniCrossParticle 
+                  key={`${activeUpload.id}-microcross-${idx}`} 
                   angle={angle} 
-                  delay={idx * 0.02} 
-                  distance={40 + Math.random() * 50} 
+                  delay={idx * 0.03} 
+                  distance={35 + Math.random() * 45}
+                  scale={0.5 + Math.random() * 0.5}
+                  rotationSpeed={-45 + Math.random() * 90} // Gives them a slow, graceful tumble as they float
                 />
               ))}
             </div>
