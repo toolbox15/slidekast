@@ -139,7 +139,6 @@ const SectionTitleCard = ({ section, frame, opacity, isMobile = false }) => {
   );
 };
 
-// --- FIXED MULTI-MODE RESPONSIVE PHOTO PLAYER PANEL ---
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = false }) => {
   if (isMobile) {
     return (
@@ -159,7 +158,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
           backgroundColor: '#000000'
         }}
       >
-        {/* Left Container: Visual Asset expands to take up 60% of frame space */}
         <div style={{ width: '60%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <img 
             src={resolveImageSource(item.photo.image_url)} 
@@ -176,7 +174,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
           />
         </div>
 
-        {/* Right Container: Scaled Down Typography Details taking up 35% space */}
         <div style={{ width: '35%', paddingLeft: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 style={{ 
             fontSize: '1.25rem', 
@@ -196,13 +193,12 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
             opacity: 0.8
           }}>
             Slide {item.slideIndex + 1}
-          </h2>
+          </span>
         </div>
       </div>
     );
   }
 
-  // Fallback to standard full frame canvas presentation for signage screens
   return (
     <CinematicPhotoSlide
       photo={item.photo} 
@@ -732,14 +728,6 @@ export const MemorialSlideshowController = ({
           borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        {/* 
-          ====================================================================
-          FIXED TIMELINE RENDERING LOOP
-          ====================================================================
-          Both mobile viewports and standard signage displays now funnel directly 
-          through the active loop map. This stops component overlap and ensures 
-          titles and photos switch dynamically frame-by-frame.
-        */}
         {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
           item.type === 'title' ? (
             <SectionTitleCard 
@@ -768,7 +756,7 @@ export const MemorialSlideshowController = ({
         )}
       </div>
 
-      {/* RIGHT SIDE / BOTTOM HALF: ENGAGES RESPONSIVE CHAT COMPONENT ROUTINES */}
+      {/* RIGHT SIDE / BOTTOM HALF: CHAT STREAM COMPONENT */}
       {isMobile && (
         <MobileLiveChatFeed 
           uploads={lowerThirdUploads} 
@@ -777,7 +765,7 @@ export const MemorialSlideshowController = ({
         />
       )}
 
-      {/* FLOATING INTERACTIVE ATTRIBUTION MARKER (STRICT 30% OPACITY) */}
+      {/* FLOATING ATTRIBUTION MARKER */}
       {isMobile && (
         <a 
           href="https://slidekast.com" 
