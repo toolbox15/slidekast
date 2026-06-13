@@ -151,7 +151,7 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// --- CINEMATIC DRIFTING CROSS COMPONENT ---
+// 1. PROFESSIONAL SLOW-DRIFT CROSS COMPONENT
 const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
   return (
     <svg
@@ -161,12 +161,11 @@ const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
         top: '2px',
         left: '100%',
         marginLeft: '12px',
-        width: '18px',  // FIXED: Matches the exact 18px size of the original anchor cross
+        width: '18px',
         height: '18px',
         fill: '#d9bf8d',
         filter: 'drop-shadow(0 0 6px rgba(217,191,141,0.4))',
         pointerEvents: 'none',
-        // Increased to a very slow, graceful 4.5s transition loop with custom ease-in-out curve
         animation: `crossSlowAscend 4.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) ${delay}s forwards`,
         opacity: 0,
         '--startX': `${startX}px`,
@@ -176,6 +175,35 @@ const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
     >
       <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
     </svg>
+  );
+};
+
+// 2. ULTRA-FINE GOLD DUST COMPONENT (Dissolves quickly near the text card)
+const GoldDustParticle = ({ angle, delay, distance, size }) => {
+  const cos = Math.cos((angle * Math.PI) / 180);
+  const sin = Math.sin((angle * Math.PI) / 180);
+  const targetX = (distance * cos).toFixed(1);
+  const targetY = (distance * sin - 40).toFixed(1); // Muted vertical range for ambient background textures
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: '10px',
+        left: '100%',
+        marginLeft: '20px',
+        width: `${size}px`,
+        height: `${size}px`,
+        backgroundColor: '#d9bf8d',
+        borderRadius: '50%',
+        boxShadow: '0 0 4px #d9bf8d, 0 0 8px #ffffff',
+        pointerEvents: 'none',
+        animation: `dustScatter 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s forwards`,
+        opacity: 0,
+        '--tx': `${targetX}px`,
+        '--ty': `${targetY}px`,
+      }}
+    />
   );
 };
 
@@ -204,7 +232,7 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'The Early Years',
       subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
+      photos: earlyYearsYearsPhotos = earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
     },
     {
       id: 'life-and-family',
@@ -278,12 +306,15 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     extrapolateRight: 'clamp',
   });
 
-  // Balanced configuration for 3 overlapping, gracefully ascending duplicates
+  // Cross configurations
   const crossPlacements = [
-    { delay: 0.0, startX: 0, driftX: -15, targetY: -280 },
-    { delay: 0.6, startX: -5, driftX: 20, targetY: -340 },
-    { delay: 1.2, startX: 5, driftX: -5, targetY: -400 }
+    { delay: 0.0, startX: 0, driftX: -20, targetY: -290 },
+    { delay: 0.5, startX: -5, driftX: 25, targetY: -360 },
+    { delay: 1.0, startX: 5, driftX: -8, targetY: -420 }
   ];
+
+  // Upward-spraying angles for the accompanying gold dust trail
+  const dustAngles = [220, 240, 260, 270, 280, 300, 320, 250, 290, 270];
 
   return (
     <div
@@ -302,7 +333,7 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         pointerEvents: 'none',
       }}
     >
-      {/* PROFESSIONAL SLOW-RISE TIMING SCENARIO */}
+      {/* PROFESSIONAL MULTI-VELOCITY ANIMATION PIPELINES */}
       <style>{`
         @keyframes crossSlowAscend {
           0% {
@@ -310,13 +341,26 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
             opacity: 0;
           }
           15% {
-            opacity: 0.85; /* Soft, feathered entry reveal */
+            opacity: 0.85;
           }
           75% {
             opacity: 0.60;
           }
           100% {
             transform: translate(var(--driftX), var(--targetY));
+            opacity: 0;
+          }
+        }
+        @keyframes dustScatter {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.9;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) scale(0.2);
             opacity: 0;
           }
         }
@@ -386,7 +430,7 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                 <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
               </svg>
 
-              {/* CINEMATIC ASCENSION: Identical 18px crosses lift off softly and ease away */}
+              {/* RENDER SLOW DRIFT CROSSES */}
               {shouldDisperse && crossPlacements.map((config, idx) => (
                 <AscendingCrossParticle 
                   key={`${activeUpload.id}-cloncross-${idx}`} 
@@ -394,6 +438,17 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                   startX={config.startX}
                   driftX={config.driftX}
                   targetY={config.targetY}
+                />
+              ))}
+
+              {/* RENDER SOFT GOLD DUST TRAIL RIGHT AT THE POINT OF FRACTURE */}
+              {shouldDisperse && dustAngles.map((angle, idx) => (
+                <GoldDustParticle 
+                  key={`${activeUpload.id}-dust-${idx}`} 
+                  angle={angle} 
+                  delay={idx * 0.04} 
+                  distance={25 + Math.random() * 35}
+                  size={Math.random() > 0.5 ? 3 : 2} // Mixes 2px and 3px sizes
                 />
               ))}
             </div>
@@ -481,9 +536,7 @@ export const MemorialSlideshowController = ({
 
       {/* ZONE 2: RUNNING LOWER THIRD COMPONENT */}
       <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
-        <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
-          <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
-        </div>
+        <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
       </div>
     </div>
   );
