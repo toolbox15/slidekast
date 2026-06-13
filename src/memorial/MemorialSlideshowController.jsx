@@ -1,4 +1,156 @@
-// Rebuilt Live Tribute Component: Locked cleanly inside its assigned 20% viewport footprint
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { CinematicPhotoSlide } from './CinematicPhotoSlide';
+import { useLiveTributes } from '../useLiveTributes'; 
+import {
+  PHOTO_SLIDE_FRAMES,
+  TITLE_CARD_FRAMES,
+  TRANSITION_FRAMES,
+  buildTimeline,
+  normalizePhoto,
+  normalizeUpload,
+  resolveImageSource,
+} from './memorialUtils';
+
+const LIVE_LOWER_THIRD_FRAMES = 540;
+
+const linearInterpolate = (value, inputRange, outputRange, options = {}) => {
+  const [inputMin, inputMax] = inputRange;
+  const [outputMin, outputMax] = outputRange;
+  
+  if (value <= inputMin) return options.extrapolateLeft === 'clamp' ? outputMin : value;
+  if (value >= inputMax) return options.extrapolateRight === 'clamp' ? outputMax : value;
+  
+  const percentage = (value - inputMin) / (inputMax - inputMin);
+  return outputMin + percentage * (outputMax - outputMin);
+};
+
+const buildPlaybackItems = (timeline) => {
+  const items = [];
+  let cursor = 0;
+
+  timeline.forEach((section) => {
+    items.push({
+      id: `${section.id}-title`,
+      type: 'title',
+      section,
+      start: cursor,
+      duration: TITLE_CARD_FRAMES,
+      end: cursor + TITLE_CARD_FRAMES,
+    });
+
+    cursor += TITLE_CARD_FRAMES;
+
+    section.photos.forEach((photo, index) => {
+      items.push({
+        id: `${section.id}-photo-${index}`,
+        type: 'photo',
+        section,
+        photo,
+        slideIndex: index,
+        start: cursor,
+        duration: PHOTO_SLIDE_FRAMES,
+        end: cursor + PHOTO_SLIDE_FRAMES,
+      });
+
+      cursor += PHOTO_SLIDE_FRAMES;
+    });
+  });
+
+  return {
+    items,
+    totalDuration: cursor,
+  };
+};
+
+const getVisiblePlaybackItems = (items, totalDuration, frame) => {
+  if (items.length === 0 || totalDuration <= 0) return [];
+
+  const loopFrame = frame % totalDuration;
+  const activeIndex = items.findIndex((item) => loopFrame >= item.start && loopFrame < item.end);
+  const safeActiveIndex = activeIndex === -1 ? 0 : activeIndex;
+  const active = items[safeActiveIndex];
+  const activeFrame = loopFrame - active.start;
+  const incomingOpacity = linearInterpolate(activeFrame, [0, TRANSITION_FRAMES], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const visible = [];
+
+  if (activeFrame < TRANSITION_FRAMES) {
+    const previous = items[(safeActiveIndex - 1 + items.length) % items.length];
+    visible.push({
+      item: previous,
+      frame: Math.max(0, previous.duration - TRANSITION_FRAMES + activeFrame),
+      opacity: 1 - incomingOpacity,
+      isEntering: false,
+      isExiting: true,
+    });
+  }
+
+  visible.push({
+    item: active,
+    frame: activeFrame,
+    opacity: incomingOpacity,
+    isEntering: activeFrame < TRANSITION_FRAMES,
+    isExiting: false,
+  });
+
+  return visible;
+};
+
+const SectionTitleCard = ({ section, frame, opacity }) => {
+  const titleY = linearInterpolate(frame, [0, 44], [42, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const ruleWidth = linearInterpolate(frame, [16, 66], [0, 420], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        opacity,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '20px',
+        boxSizing: 'border-box'
+      }}
+    >
+      <div style={{ maxWidth: '90%', width: '1120px' }}>
+        <div style={{ color: '#d9bf8d', fontSize: '20px', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '20px' }}>
+          {section.eyebrow}
+        </div>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(32px, 6vw, 84px)', lineHeight: 1.1, fontWeight: 400, transform: `translateY(${titleY}px)` }}>
+          {section.title}
+        </div>
+        <div style={{ width: ruleWidth, height: '2px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '24px auto' }} />
+        <div style={{ fontSize: 'clamp(16px, 2vw, 24px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.78)' }}>
+          {section.subtitle}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
+  return (
+    <CinematicPhotoSlide
+      photo={item.photo}
+      frame={slideFrame}
+      frameShape={item.section.frameShape}
+      opacity={opacity}
+      isEntering={isEntering}
+    />
+  );
+};
+
+// FIXED LOWER THIRD: Snaps frame borders tightly around text layout length dynamically
 const LiveTributeLowerThird = ({ uploads, frame }) => {
   const liveUploads = useMemo(
     () => uploads.length > 0 ? uploads : [{
@@ -49,8 +201,8 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     >
       <div
         style={{
-          width: 'fit-content', // FIXED: Forces the card to collapse tightly around the content length
-          minWidth: '450px',    // Gives it a solid base width so short messages still look substantial
+          width: 'fit-content', // Squeezes the width to frame content precisely with zero trailing gaps
+          minWidth: '450px',    // Solid base width anchor so very short names still look layout-balanced
           maxWidth: '85vw',
           minHeight: '110px',
           opacity,
@@ -94,6 +246,136 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
             {activeUpload.message_text || 'Shared a memory in loving tribute.'}
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const Background = ({ funeralHomeName, lovedOneName, frame }) => {
+  const shimmer = linearInterpolate(frame % 180, [0, 90, 180], [0.18, 0.34, 0.18]);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 16% 18%, rgba(154,178,177,0.26), transparent 24%), radial-gradient(circle at 86% 76%, rgba(217,191,141,0.18), transparent 28%), linear-gradient(135deg, #101417 0%, #243136 48%, #121517 100%)', zIndex: -1 }}>
+      <div style={{ position: 'absolute', inset: '3%', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 0 140px rgba(0,0,0,0.22)' }} />
+      <div style={{ position: 'absolute', top: 0, right: '15%', width: '2px', height: '100%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.32), transparent)', opacity: shimmer }} />
+      <div style={{ position: 'absolute', left: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+        {funeralHomeName}
+      </div>
+      <div style={{ position: 'absolute', right: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+        {lovedOneName}
+      </div>
+    </div>
+  );
+};
+
+const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
+  return [
+    {
+      id: 'early-years',
+      eyebrow: 'Legacy Childhood Photos',
+      title: 'The Early Years',
+      subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
+      frameShape: 'rounded',
+      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
+    },
+    {
+      id: 'life-and-family',
+      eyebrow: 'Marriage, Children, Milestones',
+      title: 'Building a Life & Family',
+      subtitle: 'The chapters of partnership, parenthood, home, work, and milestones.',
+      frameShape: 'rounded',
+      photos: familyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Family Chapter ${index + 1}`)),
+    },
+    {
+      id: 'lasting-legacy',
+      eyebrow: 'Recent Photos, Grandkids, Community Impact',
+      title: 'A Lasting Legacy',
+      subtitle: 'Recent moments, grandchildren, friendships, service, and community impact.',
+      frameShape: 'oval',
+      photos: legacyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Legacy Moment ${index + 1}`)),
+    },
+  ].map((section) => ({
+    ...section,
+    photos: section.photos.length > 0 ? section.photos : [
+      { image_url: '', caption: section.title, sender_name: '', message_text: '' }
+    ],
+  }));
+};
+
+export const MemorialSlideshowController = ({
+  funeralHomeName = 'Evergreen Funeral Home',
+  lovedOneName = 'Margaret Elaine Parker',
+  liveEventId = 'smith-wedding-2026',
+  earlyYearsPhotos = [],
+  familyPhotos = [],
+  legacyPhotos = [],
+  liveTributesSeed = [],
+}) => {
+  const [frame, setFrame] = useState(0);
+  const lastTimeRef = useRef(Date.now());
+
+  useEffect(() => {
+    let animationFrameId;
+    const renderLoop = () => {
+      const now = Date.now();
+      const elapsed = now - lastTimeRef.current;
+      if (elapsed >= 33) {
+        setFrame((prev) => prev + 1);
+        lastTimeRef.current = now - (elapsed % 33);
+      }
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+    animationFrameId = requestAnimationFrame(renderLoop);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
+
+  const { tributes } = useLiveTributes(liveEventId);
+  const lowerThirdUploads = useMemo(
+    () => (tributes.length > 0 ? tributes : liveTributesSeed).map((upload, index) => normalizeUpload(upload, index)),
+    [tributes, liveTributesSeed]
+  );
+
+  const sections = useMemo(
+    () => buildSections({ earlyYearsPhotos, familyPhotos, legacyPhotos }),
+    [earlyYearsPhotos, familyPhotos, legacyPhotos]
+  );
+  
+  const timeline = useMemo(() => buildTimeline(sections), [sections]);
+  const { items, totalDuration } = useMemo(() => buildPlaybackItems(timeline), [timeline]);
+  const visibleItems = useMemo(() => getVisiblePlaybackItems(items, totalDuration, frame), [items, totalDuration, frame]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        color: '#f8fafc',
+        fontFamily: 'Arial, sans-serif',
+        overflow: 'hidden',
+        background: '#101417',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100vw',
+        height: '100vh',
+        boxSizing: 'border-box'
+      }}
+    >
+      <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
+      
+      {/* ZONE 1: CORE PRESENTATION WORKSPACE */}
+      <div style={{ flex: '0 0 80%', width: '100%', position: 'relative', overflow: 'hidden' }}>
+        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
+          item.type === 'title' ? (
+            <SectionTitleCard key={`${item.id}-${item.start}`} section={item.section} frame={itemFrame} opacity={opacity} />
+          ) : (
+            <SectionPhotoPlayer key={`${item.id}-${item.start}`} item={item} slideFrame={itemFrame} opacity={opacity} isEntering={isEntering} />
+          )
+        )}
+      </div>
+
+      {/* ZONE 2: RUNNING LOWER THIRD COMPONENT */}
+      <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
+        <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
       </div>
     </div>
   );
