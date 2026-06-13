@@ -56,15 +56,16 @@ export const CinematicPhotoSlide = ({
         backgroundColor: "#101417",
       }}
     >
+      {/* 1. Blurred Background Plate */}
       {imgUrl ? (
         <img
           src={imgUrl}
-          alt={caption}
+          alt=""
           style={{
             position: "absolute",
-            inset: -34,
-            width: "calc(100% + 68px)",
-            height: "calc(100% + 68px)",
+            inset: -50,
+            width: "calc(100% + 100px)",
+            height: "calc(100% + 100px)",
             objectFit: "cover",
             objectPosition: "center",
             filter: "blur(42px) brightness(0.36) saturate(0.92)",
@@ -73,10 +74,12 @@ export const CinematicPhotoSlide = ({
           }}
         />
       ) : null}
+
+      {/* 2. Main Photo Container (Strictly bounded leaving 160px at bottom for text) */}
       <div
         style={{
           position: "absolute",
-          inset: "58px 96px 238px",
+          inset: "40px 80px 160px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -84,21 +87,20 @@ export const CinematicPhotoSlide = ({
           transformOrigin: "center center",
         }}
       >
+        {/* The Protective Gold Frame */}
         <div
           style={{
-            maxWidth: "100%",
-            maxHeight: "100%",
+            width: "100%",
+            height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
+            boxSizing: "border-box", // Forces padding to stay inside constraints
             borderRadius: radius,
             border: "1px solid rgba(238,222,190,0.72)",
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.045))",
-            boxShadow: `0 34px 96px rgba(0,0,0,0.52), 0 0 ${
-              26 + frameGlow * 42
-            }px rgba(217,191,141,0.18), inset 0 0 0 1px rgba(255,255,255,0.14)`,
+            background: "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.045))",
+            boxShadow: `0 34px 96px rgba(0,0,0,0.52), 0 0 ${26 + frameGlow * 42}px rgba(217,191,141,0.18), inset 0 0 0 1px rgba(255,255,255,0.14)`,
           }}
         >
           {imgUrl ? (
@@ -106,12 +108,9 @@ export const CinematicPhotoSlide = ({
               src={imgUrl}
               alt={caption}
               style={{
-                display: "block",
-                maxWidth: "100%",
-                maxHeight: "100%",
-                width: "auto",
-                height: "auto",
-                objectFit: "contain",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain", // Forces image to shrink to fit the box
                 borderRadius: frameShape === "oval" ? "999px" : "12px",
                 boxShadow: "0 18px 52px rgba(0,0,0,0.48)",
                 filter: "saturate(0.96) contrast(1.04)",
@@ -120,22 +119,16 @@ export const CinematicPhotoSlide = ({
           ) : (
             <div
               style={{
-                width: 840,
-                maxWidth: "100%",
-                height: 500,
-                maxHeight: "100%",
+                width: "100%",
+                height: "100%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: 62,
-                boxSizing: "border-box",
                 borderRadius: frameShape === "oval" ? "999px" : "12px",
-                background:
-                  "linear-gradient(135deg, rgba(82,98,104,0.62), rgba(28,34,38,0.88))",
+                background: "linear-gradient(135deg, rgba(82,98,104,0.62), rgba(28,34,38,0.88))",
                 color: "rgba(255,255,255,0.82)",
                 fontFamily: "Georgia, serif",
                 fontSize: 48,
-                lineHeight: 1.16,
                 textAlign: "center",
               }}
             >
@@ -144,12 +137,15 @@ export const CinematicPhotoSlide = ({
           )}
         </div>
       </div>
+
+      {/* 3. Text & Caption Zone (Safely parked at the bottom) */}
       <div
         style={{
           position: "absolute",
-          bottom: 50,
+          bottom: 30,
           left: 0,
           width: "100%",
+          height: "120px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -178,7 +174,7 @@ export const CinematicPhotoSlide = ({
                 color: "#f8fafc",
                 margin: "0 0 12px",
                 lineHeight: 1.32,
-                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textShadow: "0 4px 12px rgba(0,0,0,0.9)",
                 maxWidth: 1200,
               }}
             >
