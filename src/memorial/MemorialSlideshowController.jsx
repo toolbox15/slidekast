@@ -158,6 +158,7 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
           backgroundColor: '#000000'
         }}
       >
+        {/* Adjusted Left Container: Holds 60% with full centering */}
         <div style={{ width: '60%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <img 
             src={resolveImageSource(item.photo.image_url)} 
@@ -174,6 +175,7 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
           />
         </div>
 
+        {/* Adjusted Right Container: Holds 35% of horizontal room safely */}
         <div style={{ width: '35%', paddingLeft: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 style={{ 
             fontSize: '1.25rem', 
@@ -728,16 +730,20 @@ export const MemorialSlideshowController = ({
           borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
-          item.type === 'title' ? (
-            <SectionTitleCard 
-              key={`${item.id}-${item.start}`} 
-              section={item.section} 
-              frame={itemFrame} 
-              opacity={opacity} 
-              isMobile={isMobile}
-            />
-          ) : (
+        {/* FIX: Conditional single-component layer checks to halt overlapping text collisions */}
+        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) => {
+          if (item.type === 'title') {
+            return (
+              <SectionTitleCard 
+                key={`${item.id}-${item.start}`} 
+                section={item.section} 
+                frame={itemFrame} 
+                opacity={opacity} 
+                isMobile={isMobile}
+              />
+            );
+          }
+          return (
             <SectionPhotoPlayer 
               key={`${item.id}-${item.start}`} 
               item={item} 
@@ -746,8 +752,8 @@ export const MemorialSlideshowController = ({
               isEntering={isEntering} 
               isMobile={isMobile}
             />
-          )
-        )}
+          );
+        })}
 
         {!isMobile && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', zIndex: 50 }}>
@@ -765,7 +771,7 @@ export const MemorialSlideshowController = ({
         />
       )}
 
-      {/* FLOATING ATTRIBUTION MARKER */}
+      {/* FIXED FLOATING ATTRIBUTION MARKER: Locked to 100% Solid Opacity with sharp framing layouts */}
       {isMobile && (
         <a 
           href="https://slidekast.com" 
@@ -776,26 +782,25 @@ export const MemorialSlideshowController = ({
             bottom: '16px',
             right: '16px',
             zIndex: 99999,
-            backgroundColor: 'rgba(10, 14, 16, 0.85)',
+            backgroundColor: '#1c232b', 
             color: '#ffffff',
-            padding: '6px 12px',
+            padding: '8px 14px',
             borderRadius: '20px',
-            fontSize: '11px',
+            fontSize: '0.75rem',
             textDecoration: 'none',
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: 'sans-serif',
             letterSpacing: '0.5px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            opacity: 0.3, 
-            transition: 'opacity 0.2s ease-in-out',
+            border: '1px solid rgba(255, 255, 255, 0.25)', 
+            opacity: 1, 
             display: 'inline-flex',
             alignItems: 'center',
             gap: '4px',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.95'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.3'}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          <span style={{ opacity: 0.7 }}>powered by</span>
+          <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>powered by</span>
           <strong style={{ color: '#d9bf8d', fontWeight: '700' }}>slidekast</strong>
         </a>
       )}
