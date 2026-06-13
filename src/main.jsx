@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import GuestUploadForm from './GuestUploadForm';
-import DirectorAdminForm from './DirectorAdminForm';
+import { MemorialAdminDashboard } from './memorial/MemorialAdminDashboard'; // UPDATED: Imported the custom graphical dashboard GUI
 import { FuneralSlideshow } from './FuneralSlideshow';
 import { db } from './firebaseConfig'; 
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -16,7 +16,7 @@ const MainApp = () => {
   // 2. Set initial authorization and photo state
   const [eventStatus, setEventStatus] = useState({ loading: true, active: true, error: false });
   
-  // NEW: State to hold the arrays pulled from Firestore
+  // State to hold the arrays pulled from Firestore
   const [eventPhotos, setEventPhotos] = useState({
     earlyYearsPhotos: [],
     familyPhotos: [],
@@ -90,7 +90,7 @@ const MainApp = () => {
   return (
     <div style={{ minHeight: '100vh', width: '100vw', margin: 0, padding: 0, background: '#101417', color: '#f8fafc' }}>
       {isDisplayPage ? (
-        // PASS THE FIRESTORE DATA DOWN AS PROPS
+        // PASS THE FIRESTORE DATA DOWN AS PROPS TO LIVE LOOP DISPLAY
         <FuneralSlideshow 
           eventId={eventId} 
           liveEventId={eventId} 
@@ -99,7 +99,13 @@ const MainApp = () => {
           legacyPhotos={eventPhotos.legacyPhotos}
         />
       ) : isAdminPage ? (
-        <DirectorAdminForm eventId={eventId} />
+        // RENDER THE NEW ADVANCED DASHBOARD GUI GRAPHICAL CONTROLLER
+        <MemorialAdminDashboard 
+          eventId={eventId} 
+          initialEarlyYears={eventPhotos.earlyYearsPhotos}
+          initialFamily={eventPhotos.familyPhotos}
+          initialLegacy={eventPhotos.legacyPhotos}
+        />
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
           <GuestUploadForm eventId={eventId} />
