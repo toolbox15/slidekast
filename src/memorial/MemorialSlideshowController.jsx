@@ -141,7 +141,7 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   return (
     <CinematicPhotoSlide
-      photo={item.photo}
+      photo={photo}
       frame={slideFrame}
       slideIndex={item.slideIndex}
       frameShape={item.section.frameShape}
@@ -178,12 +178,12 @@ const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
   );
 };
 
-// 2. ULTRA-FINE GOLD DUST COMPONENT (Dissolves quickly near the text card)
+// 2. ULTRA-FINE GOLD DUST COMPONENT
 const GoldDustParticle = ({ angle, delay, distance, size }) => {
   const cos = Math.cos((angle * Math.PI) / 180);
   const sin = Math.sin((angle * Math.PI) / 180);
   const targetX = (distance * cos).toFixed(1);
-  const targetY = (distance * sin - 40).toFixed(1); // Muted vertical range for ambient background textures
+  const targetY = (distance * sin - 40).toFixed(1);
 
   return (
     <div
@@ -232,7 +232,8 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       title: 'The Early Years',
       subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      photos: earlyYearsYearsPhotos = earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
+      // TYPO FIXED: Corrected mapping directly back to the proper earlyYearsPhotos variable array
+      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
     },
     {
       id: 'life-and-family',
@@ -306,14 +307,12 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     extrapolateRight: 'clamp',
   });
 
-  // Cross configurations
   const crossPlacements = [
     { delay: 0.0, startX: 0, driftX: -20, targetY: -290 },
     { delay: 0.5, startX: -5, driftX: 25, targetY: -360 },
     { delay: 1.0, startX: 5, driftX: -8, targetY: -420 }
   ];
 
-  // Upward-spraying angles for the accompanying gold dust trail
   const dustAngles = [220, 240, 260, 270, 280, 300, 320, 250, 290, 270];
 
   return (
@@ -333,7 +332,6 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         pointerEvents: 'none',
       }}
     >
-      {/* PROFESSIONAL MULTI-VELOCITY ANIMATION PIPELINES */}
       <style>{`
         @keyframes crossSlowAscend {
           0% {
@@ -430,7 +428,6 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                 <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
               </svg>
 
-              {/* RENDER SLOW DRIFT CROSSES */}
               {shouldDisperse && crossPlacements.map((config, idx) => (
                 <AscendingCrossParticle 
                   key={`${activeUpload.id}-cloncross-${idx}`} 
@@ -441,14 +438,13 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                 />
               ))}
 
-              {/* RENDER SOFT GOLD DUST TRAIL RIGHT AT THE POINT OF FRACTURE */}
               {shouldDisperse && dustAngles.map((angle, idx) => (
                 <GoldDustParticle 
                   key={`${activeUpload.id}-dust-${idx}`} 
                   angle={angle} 
                   delay={idx * 0.04} 
                   distance={25 + Math.random() * 35}
-                  size={Math.random() > 0.5 ? 3 : 2} // Mixes 2px and 3px sizes
+                  size={Math.random() > 0.5 ? 3 : 2}
                 />
               ))}
             </div>
@@ -523,7 +519,6 @@ export const MemorialSlideshowController = ({
     >
       <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
       
-      {/* ZONE 1: CORE PRESENTATION WORKSPACE */}
       <div style={{ flex: '0 0 80%', width: '100%', position: 'relative', overflow: 'hidden' }}>
         {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
           item.type === 'title' ? (
@@ -534,7 +529,6 @@ export const MemorialSlideshowController = ({
         )}
       </div>
 
-      {/* ZONE 2: RUNNING LOWER THIRD COMPONENT */}
       <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
         <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
       </div>
