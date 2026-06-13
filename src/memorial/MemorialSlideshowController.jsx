@@ -151,14 +151,8 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// --- MINIATURE FRACTURED CROSS PARTICLE ---
-const MiniCrossParticle = ({ angle, delay, distance, scale, rotationSpeed }) => {
-  const cos = Math.cos((angle * Math.PI) / 180);
-  const sin = Math.sin((angle * Math.PI) / 180);
-  // Calculate a dynamic outward burst path that driftingly drifts upwards over time
-  const targetX = (distance * cos).toFixed(1);
-  const targetY = (distance * sin - 120).toFixed(1); // Drifts significantly higher as it dissolves
-
+// --- CINEMATIC DRIFTING CROSS COMPONENT ---
+const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -167,17 +161,17 @@ const MiniCrossParticle = ({ angle, delay, distance, scale, rotationSpeed }) => 
         top: '2px',
         left: '100%',
         marginLeft: '12px',
-        width: '12px',  // Smaller fractured profile pieces
-        height: '12px',
+        width: '18px',  // FIXED: Matches the exact 18px size of the original anchor cross
+        height: '18px',
         fill: '#d9bf8d',
-        filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.7))',
+        filter: 'drop-shadow(0 0 6px rgba(217,191,141,0.4))',
         pointerEvents: 'none',
-        animation: `crossDissolve 1.8s cubic-bezier(0.165, 0.84, 0.44, 1) ${delay}s forwards`,
+        // Increased to a very slow, graceful 4.5s transition loop with custom ease-in-out curve
+        animation: `crossSlowAscend 4.5s cubic-bezier(0.445, 0.05, 0.55, 0.95) ${delay}s forwards`,
         opacity: 0,
-        '--tx': `${targetX}px`,
-        '--ty': `${targetY}px`,
-        '--rot': `${rotationSpeed}deg`,
-        transform: `scale(${scale})`,
+        '--startX': `${startX}px`,
+        '--driftX': `${driftX}px`,
+        '--targetY': `${targetY}px`,
       }}
     >
       <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
@@ -284,8 +278,12 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     extrapolateRight: 'clamp',
   });
 
-  // Angles mapped out to spray upwards and outwards elegantly (between 200 and 340 degrees)
-  const crossAngles = [210, 235, 255, 270, 285, 305, 330, 250, 290];
+  // Balanced configuration for 3 overlapping, gracefully ascending duplicates
+  const crossPlacements = [
+    { delay: 0.0, startX: 0, driftX: -15, targetY: -280 },
+    { delay: 0.6, startX: -5, driftX: 20, targetY: -340 },
+    { delay: 1.2, startX: 5, driftX: -5, targetY: -400 }
+  ];
 
   return (
     <div
@@ -304,17 +302,22 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         pointerEvents: 'none',
       }}
     >
-      {/* SHATTER AND DISSOLVE KEYFRAMES */}
+      {/* PROFESSIONAL SLOW-RISE TIMING SCENARIO */}
       <style>{`
-        @keyframes crossDissolve {
+        @keyframes crossSlowAscend {
           0% {
-            transform: translate(0, 0) scale(0.6) rotate(0deg);
-            opacity: 1;
+            transform: translate(var(--startX), 0);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.85; /* Soft, feathered entry reveal */
+          }
+          75% {
+            opacity: 0.60;
           }
           100% {
-            transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(var(--rot));
+            transform: translate(var(--driftX), var(--targetY));
             opacity: 0;
-            filter: drop-shadow(0 0 10px rgba(217,191,141,0));
           }
         }
       `}</style>
@@ -376,22 +379,21 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
                   marginLeft: '12px',
                   marginBottom: '2px',
                   filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
-                  transition: 'opacity 0.1s ease-out',
+                  transition: 'opacity 0.25s ease-out',
                   opacity: shouldDisperse ? 0 : 1, 
                 }}
               >
                 <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
               </svg>
 
-              {/* SHATTER EFFECT: Generates micro golden crosses that burst outward and fade away */}
-              {shouldDisperse && crossAngles.map((angle, idx) => (
-                <MiniCrossParticle 
-                  key={`${activeUpload.id}-microcross-${idx}`} 
-                  angle={angle} 
-                  delay={idx * 0.03} 
-                  distance={35 + Math.random() * 45}
-                  scale={0.5 + Math.random() * 0.5}
-                  rotationSpeed={-45 + Math.random() * 90} // Gives them a slow, graceful tumble as they float
+              {/* CINEMATIC ASCENSION: Identical 18px crosses lift off softly and ease away */}
+              {shouldDisperse && crossPlacements.map((config, idx) => (
+                <AscendingCrossParticle 
+                  key={`${activeUpload.id}-cloncross-${idx}`} 
+                  delay={config.delay}
+                  startX={config.startX}
+                  driftX={config.driftX}
+                  targetY={config.targetY}
                 />
               ))}
             </div>
@@ -479,7 +481,9 @@ export const MemorialSlideshowController = ({
 
       {/* ZONE 2: RUNNING LOWER THIRD COMPONENT */}
       <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
-        <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+        <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
+          <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+        </div>
       </div>
     </div>
   );
