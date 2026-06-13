@@ -98,12 +98,12 @@ const getVisiblePlaybackItems = (items, totalDuration, frame) => {
   return visible;
 };
 
-const SectionTitleCard = ({ section, frame, opacity }) => {
+const SectionTitleCard = ({ section, frame, opacity, isMobile = false }) => {
   const titleY = linearInterpolate(frame, [0, 44], [42, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const ruleWidth = linearInterpolate(frame, [16, 66], [0, 420], {
+  const ruleWidth = linearInterpolate(frame, [16, 66], [0, isMobile ? 180 : 420], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -118,19 +118,20 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '20px',
-        boxSizing: 'border-box'
+        padding: isMobile ? '12px' : '20px',
+        boxSizing: 'border-box',
+        backgroundColor: isMobile ? '#000000' : 'transparent',
       }}
     >
-      <div style={{ maxWidth: '90%', width: '1120px' }}>
-        <div style={{ color: '#d9bf8d', fontSize: '18px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px' }}>
+      <div style={{ maxWidth: '95%', width: '1120px' }}>
+        <div style={{ color: '#d9bf8d', fontSize: isMobile ? '11px' : '18px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>
           {section.eyebrow}
         </div>
-        <div style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(24px, 4vw, 64px)', lineHeight: 1.2, fontWeight: 400, transform: `translateY(${titleY}px)` }}>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: isMobile ? '22px' : 'clamp(24px, 4vw, 64px)', lineHeight: 1.2, fontWeight: 400, transform: `translateY(${titleY}px)`, color: '#ffffff' }}>
           {section.title}
         </div>
-        <div style={{ width: ruleWidth, height: '1px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '16px auto' }} />
-        <div style={{ fontSize: 'clamp(14px, 1.5vw, 20px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.78)' }}>
+        <div style={{ width: `${ruleWidth}px`, height: '1px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '12px auto' }} />
+        <div style={{ fontSize: isMobile ? '12px' : 'clamp(14px, 1.5vw, 20px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.72)' }}>
           {section.subtitle}
         </div>
       </div>
@@ -138,7 +139,70 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
   );
 };
 
-const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
+// --- FIXED MULTI-MODE RESPONSIVE PHOTO PLAYER PANEL ---
+const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = false }) => {
+  if (isMobile) {
+    return (
+      <div 
+        style={{ 
+          position: 'absolute',
+          inset: 0,
+          opacity,
+          display: 'flex', 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          width: '100%', 
+          height: '100%', 
+          padding: '16px', 
+          boxSizing: 'border-box',
+          backgroundColor: '#000000'
+        }}
+      >
+        {/* Left Container: Visual Asset expands to take up 60% of frame space */}
+        <div style={{ width: '60%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img 
+            src={resolveImageSource(item.photo.image_url)} 
+            alt="" 
+            style={{
+              width: '100%',
+              height: 'auto',
+              maxHeight: '95%',
+              objectFit: 'contain',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+            }}
+          />
+        </div>
+
+        {/* Right Container: Scaled Down Typography Details taking up 35% space */}
+        <div style={{ width: '35%', paddingLeft: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 style={{ 
+            fontSize: '1.25rem', 
+            margin: '0 0 2px 0', 
+            fontFamily: 'Georgia, serif', 
+            color: '#ffffff',
+            lineHeight: '1.2',
+            fontWeight: '400'
+          }}>
+            {item.section.title}
+          </h2>
+          <span style={{ 
+            fontSize: '0.95rem', 
+            fontWeight: 'bold',
+            color: '#d9bf8d',
+            fontFamily: 'monospace',
+            opacity: 0.8
+          }}>
+            Slide {item.slideIndex + 1}
+          </h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback to standard full frame canvas presentation for signage screens
   return (
     <CinematicPhotoSlide
       photo={item.photo} 
@@ -216,11 +280,9 @@ const Background = ({ funeralHomeName, lovedOneName, frame }) => {
   );
 };
 
-// --- MOBILE SPLIT-SCREEN CHAT MODULE ---
-const MobileLiveChatFeed = ({ uploads }) => {
+const MobileLiveChatFeed = ({ uploads, onGuestSubmit, onPhotoUpload }) => {
   const chatEndRef = useRef(null);
 
-  // Auto-scrolls chat feed to keep the newest uploads visible
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -236,12 +298,11 @@ const MobileLiveChatFeed = ({ uploads }) => {
         borderTop: '2px solid rgba(217,191,141,0.35)',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflowY: 'auto',
         boxSizing: 'border-box'
       }}
     >
-      {/* Live Stream Title Sub-Bar */}
-      <div style={{ background: '#192124', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
+      <div style={{ background: '#192124', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '8px', height: '8px', backgroundColor: '#4ade80', borderRadius: '50%', boxShadow: '0 0 8px #4ade80' }} />
           <span style={{ fontSize: '13px', fontFamily: 'Georgia, serif', color: '#d9bf8d', letterSpacing: '1px', textTransform: 'uppercase' }}>Guestbook Activity Stream</span>
@@ -249,8 +310,7 @@ const MobileLiveChatFeed = ({ uploads }) => {
         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{uploads.length} entries</span>
       </div>
 
-      {/* Message Feed Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {uploads.map((msg, idx) => {
           const imgUrl = resolveImageSource(msg.image_url);
           return (
@@ -290,6 +350,60 @@ const MobileLiveChatFeed = ({ uploads }) => {
           );
         })}
         <div ref={chatEndRef} />
+      </div>
+
+      <div style={{
+        padding: '24px 16px',
+        backgroundColor: '#11161b', 
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        paddingBottom: '88px' 
+      }}>
+        <h3 style={{ fontSize: '14px', fontFamily: 'Georgia, serif', marginBottom: '14px', color: '#d9bf8d', letterSpacing: '0.5px' }}>
+          Leave a Tribute & Memory Photo
+        </h3>
+        
+        <form onSubmit={onGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <input 
+            type="text" 
+            name="sender_name"
+            placeholder="Your Name" 
+            style={{
+              width: '100%', padding: '12px', borderRadius: '6px', 
+              backgroundColor: '#1a2129', border: '1px solid #2c3540', color: '#fff', fontSize: '13px', boxSizing: 'border-box'
+            }}
+            required
+          />
+
+          <textarea 
+            name="message_text"
+            placeholder="Write your tribute or memory here..." 
+            rows="3"
+            style={{
+              width: '100%', padding: '12px', borderRadius: '6px', 
+              backgroundColor: '#1a2129', border: '1px solid #2c3540', color: '#fff', fontSize: '13px', resize: 'none', boxSizing: 'border-box'
+            }}
+            required
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ color: '#d9bf8d', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              📎 Attach a Memory or Profile Photo
+            </label>
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={onPhotoUpload}
+              style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}
+            />
+          </div>
+
+          <button type="submit" style={{
+            width: '100%', padding: '12px', borderRadius: '6px', backgroundColor: '#d9bf8d',
+            color: '#101417', fontWeight: 'bold', border: 'none', cursor: 'pointer', marginTop: '4px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px'
+          }}>
+            Publish to Live Display
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -524,12 +638,11 @@ export const MemorialSlideshowController = ({
   const [isMobile, setIsMobile] = useState(false);
   const lastTimeRef = useRef(Date.now());
 
-  // Detect window resizing to dynamically toggle full-screen vs split-screen
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    handleResize(); // Initial run
+    handleResize(); 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -564,6 +677,23 @@ export const MemorialSlideshowController = ({
   const { items, totalDuration } = useMemo(() => buildPlaybackItems(timeline), [timeline]);
   const visibleItems = useMemo(() => getVisiblePlaybackItems(items, totalDuration, frame), [items, totalDuration, frame]);
 
+  const handleMockFormSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    console.log("Mock submission received:", {
+      sender_name: formData.get("sender_name"),
+      message_text: formData.get("message_text")
+    });
+    e.currentTarget.reset();
+  };
+
+  const handleMockPhotoUpload = (e) => {
+    const targetFile = e.target.files[0];
+    if (targetFile) {
+      console.log("File captured ready for background compression setup:", targetFile.name);
+    }
+  };
+
   return (
     <div
       className="slideshow-master-viewport"
@@ -575,13 +705,12 @@ export const MemorialSlideshowController = ({
         overflow: 'hidden',
         background: '#101417',
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row', // Columns on mobile split, flat row layouts elsewhere
+        flexDirection: isMobile ? 'column' : 'row', 
         width: '100vw',
         height: '100vh',
         boxSizing: 'border-box'
       }}
     >
-      {/* Global CSS Injection for Mobile Fade Animations */}
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(10px); }
@@ -594,24 +723,44 @@ export const MemorialSlideshowController = ({
       {/* LEFT SIDE / TOP HALF: THE CINEMATIC MEDIA CONTROLLER */}
       <div 
         style={{ 
-          flex: isMobile ? '0 0 50%' : '0 0 100%', 
-          width: isMobile ? '100%' : '100%', 
-          height: isMobile ? '50%' : '100%',
+          flex: isMobile ? '0 0 40%' : '0 0 100%', 
+          width: '100%', 
+          height: isMobile ? '40%' : '100%',
           position: 'relative', 
-          overflow: 'hidden' 
+          overflow: 'hidden',
+          backgroundColor: isMobile ? '#000000' : 'transparent',
+          borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        <div style={{ position: 'absolute', inset: 0, bottom: isMobile ? 0 : '20%', overflow: 'hidden' }}>
-          {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
-            item.type === 'title' ? (
-              <SectionTitleCard key={`${item.id}-${item.start}`} section={item.section} frame={itemFrame} opacity={opacity} />
-            ) : (
-              <SectionPhotoPlayer key={`${item.id}-${item.start}`} item={item} slideFrame={itemFrame} opacity={opacity} isEntering={isEntering} />
-            )
-          )}
-        </div>
+        {/* 
+          ====================================================================
+          FIXED TIMELINE RENDERING LOOP
+          ====================================================================
+          Both mobile viewports and standard signage displays now funnel directly 
+          through the active loop map. This stops component overlap and ensures 
+          titles and photos switch dynamically frame-by-frame.
+        */}
+        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
+          item.type === 'title' ? (
+            <SectionTitleCard 
+              key={`${item.id}-${item.start}`} 
+              section={item.section} 
+              frame={itemFrame} 
+              opacity={opacity} 
+              isMobile={isMobile}
+            />
+          ) : (
+            <SectionPhotoPlayer 
+              key={`${item.id}-${item.start}`} 
+              item={item} 
+              slideFrame={itemFrame} 
+              opacity={opacity} 
+              isEntering={isEntering} 
+              isMobile={isMobile}
+            />
+          )
+        )}
 
-        {/* Hide running ticker ticker overlay entirely when mobile split chat view is engaged */}
         {!isMobile && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', zIndex: 50 }}>
             <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
@@ -619,8 +768,49 @@ export const MemorialSlideshowController = ({
         )}
       </div>
 
-      {/* RIGHT SIDE / BOTTOM HALF: ACTIVE LIVE CHAT RENDERING WINDOW */}
-      {isMobile && <MobileLiveChatFeed uploads={lowerThirdUploads} />}
+      {/* RIGHT SIDE / BOTTOM HALF: ENGAGES RESPONSIVE CHAT COMPONENT ROUTINES */}
+      {isMobile && (
+        <MobileLiveChatFeed 
+          uploads={lowerThirdUploads} 
+          onGuestSubmit={handleMockFormSubmit}
+          onPhotoUpload={handleMockPhotoUpload}
+        />
+      )}
+
+      {/* FLOATING INTERACTIVE ATTRIBUTION MARKER (STRICT 30% OPACITY) */}
+      {isMobile && (
+        <a 
+          href="https://slidekast.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            position: 'fixed',
+            bottom: '16px',
+            right: '16px',
+            zIndex: 99999,
+            backgroundColor: 'rgba(10, 14, 16, 0.85)',
+            color: '#ffffff',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            textDecoration: 'none',
+            fontFamily: 'Arial, sans-serif',
+            letterSpacing: '0.5px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            opacity: 0.3, 
+            transition: 'opacity 0.2s ease-in-out',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.95'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.3'}
+        >
+          <span style={{ opacity: 0.7 }}>powered by</span>
+          <strong style={{ color: '#d9bf8d', fontWeight: '700' }}>slidekast</strong>
+        </a>
+      )}
     </div>
   );
 };
