@@ -151,30 +151,30 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// --- LIGHTWEIGHT VECTOR DOVE DESIGN ---
-const FlyingDoveParticle = ({ delay, scale, startX }) => (
+// --- PREMIUM EMBEDDED GOLDEN CROSS ELEMENT ---
+const GoldenCrossParticle = ({ delay, scale, startX }) => (
   <svg
     viewBox="0 0 24 24"
     style={{
       position: 'absolute',
-      bottom: '110px', // Launches right from the top edge of the card
+      bottom: '115px', // Fires upwards from the top edge boundary
       left: `${startX}px`,
-      width: '32px',
-      height: '32px',
-      fill: 'rgba(255, 255, 255, 0.55)',
-      filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.3))',
+      width: '24px',
+      height: '24px',
+      fill: '#d9bf8d', // Matches your exact blueprint gold tone
+      filter: 'drop-shadow(0 0 8px rgba(217,191,141,0.6))', // Gives it a gentle glowing aura
       pointerEvents: 'none',
-      animation: `doveFlyUp 3.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s forwards`,
+      animation: `crossAscend 3.5s cubic-bezier(0.215, 0.610, 0.355, 1) ${delay}s forwards`,
       transform: `scale(${scale})`,
     }}
   >
-    <path d="M12,2C11.5,4 9.5,7.5 7,8.5C5,9.3 2.5,9 1,9.5C0.5,9.7 0.5,10.3 1,10.5C3.5,11.5 6,11.5 7.5,13C9,14.5 9,17 10,19.5C10.2,20 10.8,20 11,19.5C11.5,17 12,14.5 13.5,13C15,11.5 17.5,11.5 20,10.5C20.5,10.3 20.5,11.3 20,11.5C17.5,12.5 15.5,16 15,18C14.8,18.5 15.4,19 15.8,18.6C18,16.5 21,15.5 23,15.5C23.5,15.5 23.8,15 23.4,14.7C20.5,12.5 17.5,9.5 15,6C13.5,4 12.5,2.5 12,2Z" />
+    {/* Classical Latin Cross Silhouette Shape Geometry */}
+    <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
   </svg>
 );
 
-// LIVE LOWER THIRD WITH FLIGHT ENGINE INTEGRATION
 const LiveTributeLowerThird = ({ uploads, frame }) => {
-  const [doveBursts, setDoveBursts] = useState([]);
+  const [crossBursts, setCrossBursts] = useState([]);
 
   const liveUploads = useMemo(
     () => uploads.length > 0 ? uploads : [{
@@ -191,19 +191,24 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
   const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
   const imageSource = resolveImageSource(activeUpload.image_url);
 
-  // TRIGGER DOVE BURST EFFECT INSTANTLY WHEN INDEX ROTATES
+  // TIMING RESOLUTION: Wait until itemFrame hits 60 (~2 seconds) so the card is completely on-screen
   useEffect(() => {
     if (!activeUpload?.id) return;
-    
-    // Generate a quick burst of random offsets and staggered deployment intervals
-    const newDoves = Array.from({ length: 4 }).map((_, i) => ({
-      id: `${activeUpload.id}-dove-${i}-${Date.now()}`,
-      delay: i * 0.35,              // Staggers launch sequence
-      scale: 0.6 + Math.random() * 0.5, // Randomizes sizes
-      startX: 80 + Math.random() * 260, // Randomizes starting positions along horizontal length
+
+    // Generate a fresh set of cross parameters
+    const newCrosses = Array.from({ length: 4 }).map((_, i) => ({
+      id: `${activeUpload.id}-cross-${i}-${Date.now()}`,
+      delay: i * 0.4,                    // Softly staggered exit launch spacing
+      scale: 0.7 + Math.random() * 0.4,  // Varied sizes for depth separation
+      startX: 60 + Math.random() * 320,  // Disperses them elegantly across the card surface
     }));
 
-    setDoveBursts((prev) => [...prev, ...newDoves].slice(-12)); // Keeps stack memory clean
+    // We use a timer to schedule the state push right when the layout is fully viewable
+    const scheduleTimer = setTimeout(() => {
+      setCrossBursts((prev) => [...prev, ...newCrosses].slice(-16));
+    }, 1800); // Delays execution until the translation animation sequence settles
+
+    return () => clearTimeout(scheduleTimer);
   }, [activeIndex, activeUpload?.id]);
 
   const translateX = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES], [-1100, 1100], {
@@ -234,26 +239,24 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         borderTop: '1px solid rgba(217,191,141,0.28)',
         boxShadow: '0 -15px 50px rgba(0,0,0,0.5)',
         backdropFilter: 'blur(12px)',
-        overflow: 'visible', // CRITICAL: Allows flying doves to sail out of the lower box boundaries
+        overflow: 'visible', 
         pointerEvents: 'none',
       }}
     >
-      {/* INJECT ANIMATION INJECTOR CSS RULES */}
+      {/* CASCADING GLOW KEYFRAME ANIMATION SCENARIOS */}
       <style>{`
-        @keyframes doveFlyUp {
+        @keyframes crossAscend {
           0% {
-            transform: translateY(0) scale(0.4) rotate(0deg);
+            transform: translateY(0) scale(0.5) rotate(0deg);
             opacity: 0;
           }
-          10% {
+          15% {
             opacity: 1;
           }
-          50% {
-            transform: translateY(-250px) translateX(40px) scale(0.8) rotate(15deg);
-          }
           100% {
-            transform: translateY(-550px) translateX(-20px) scale(1) rotate(-10deg);
+            transform: translateY(-480px) translateX(25px) scale(1) rotate(5deg);
             opacity: 0;
+            filter: drop-shadow(0 0 15px rgba(217,191,141,0));
           }
         }
       `}</style>
@@ -278,9 +281,9 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
           boxSizing: 'border-box'
         }}
       >
-        {/* DOVE RENDER WRAPPER */}
-        {doveBursts.map((dove) => (
-          <FlyingDoveParticle key={dove.id} delay={dove.delay} scale={dove.scale} startX={dove.startX} />
+        {/* RENDER ACTIVE ASCENDING EMBEDDED GOLD CROSS BURSTS */}
+        {crossBursts.map((cross) => (
+          <GoldenCrossParticle key={cross.id} delay={cross.delay} scale={cross.scale} startX={cross.startX} />
         ))}
 
         <div
