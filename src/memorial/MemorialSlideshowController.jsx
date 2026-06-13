@@ -140,64 +140,109 @@ const SectionTitleCard = ({ section, frame, opacity, isMobile = false }) => {
 };
 
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = false }) => {
-  if (isMobile) {
-    return (
-      <div 
-        style={{ 
-          position: 'absolute',
-          inset: 0,
-          opacity,
-          display: 'flex', 
-          flexDirection: 'column', // FIXED: Stacks wide image on top, text details safely below
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          width: '100%', 
-          height: '100%', 
-          padding: '12px', 
-          boxSizing: 'border-box',
-          backgroundColor: '#000000',
-          gap: '8px'
-        }}
-      >
-        {/* Top Section: Stretches the landscape layout edge-to-edge */}
-        <div style={{ width: '100%', height: '70%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img 
-            src={resolveImageSource(item.photo.image_url)} 
-            alt="" 
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain', // Keeps photo layout proportional without crushing dimensions
-              borderRadius: '6px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
-            }}
-          />
-        </div>
+  const [isHorizontal, setIsHorizontal] = useState(true);
 
-        {/* Bottom Section: Balanced descriptive text centered directly below photo */}
-        <div style={{ width: '100%', height: '25%', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h2 style={{ 
-            fontSize: '1.25rem', 
-            margin: '0 0 2px 0', 
-            fontFamily: 'Georgia, serif', 
-            color: '#ffffff',
-            lineHeight: '1.2',
-            fontWeight: '400'
-          }}>
-            {item.photo.caption || item.section.title}
-          </h2>
-          <span style={{ 
-            fontSize: '0.95rem', 
-            fontWeight: 'bold',
-            color: '#d9bf8d',
-            fontFamily: 'sans-serif'
-          }}>
-            Slide {item.slideIndex + 1}
-          </span>
+  // Dynamic aspect-ratio check on layout load
+  useEffect(() => {
+    if (isMobile && item?.photo?.image_url) {
+      const img = new Image();
+      img.src = resolveImageSource(item.photo.image_url);
+      img.onload = () => {
+        setIsHorizontal(img.naturalWidth >= img.naturalHeight);
+      };
+    }
+  }, [item, isMobile]);
+
+  if (isMobile) {
+    if (isHorizontal) {
+      // 1. Horizontal / Widescreen Layout: Text forced straight to the bottom
+      return (
+        <div 
+          style={{ 
+            position: 'absolute',
+            inset: 0,
+            opacity,
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            width: '100%', 
+            height: '100%', 
+            padding: '12px', 
+            boxSizing: 'border-box',
+            backgroundColor: '#000000',
+            gap: '8px'
+          }}
+        >
+          <div style={{ width: '100%', height: '70%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <img 
+              src={resolveImageSource(item.photo.image_url)} 
+              alt="" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+              }}
+            />
+          </div>
+          <div style={{ width: '100%', height: '25%', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', margin: '0 0 2px 0', fontFamily: 'Georgia, serif', color: '#ffffff', lineHeight: '1.2', fontWeight: '400' }}>
+              {item.photo.caption || item.section.title}
+            </h2>
+            <span style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#d9bf8d', fontFamily: 'sans-serif' }}>
+              Slide {item.slideIndex + 1}
+            </span>
+          </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // 2. Vertical / Portrait Layout: Keeps text anchored on the side safely
+      return (
+        <div 
+          style={{ 
+            position: 'absolute',
+            inset: 0,
+            opacity,
+            display: 'flex', 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            width: '100%', 
+            height: '100%', 
+            padding: '16px', 
+            boxSizing: 'border-box',
+            backgroundColor: '#000000'
+          }}
+        >
+          <div style={{ width: '60%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <img 
+              src={resolveImageSource(item.photo.image_url)} 
+              alt="" 
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '95%',
+                objectFit: 'contain',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+              }}
+            />
+          </div>
+          <div style={{ width: '35%', paddingLeft: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', margin: '0 0 2px 0', fontFamily: 'Georgia, serif', color: '#ffffff', lineHeight: '1.2', fontWeight: '400' }}>
+              {item.photo.caption || item.section.title}
+            </h2>
+            <span style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#d9bf8d', fontFamily: 'monospace', opacity: 0.8 }}>
+              Slide {item.slideIndex + 1}
+            </span>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -729,7 +774,7 @@ export const MemorialSlideshowController = ({
           borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        {/* FIXED CONDITIONAL ROUTING LOOP: Completely splits title views from photo layouts to stop overlaps */}
+        {/* FIXED CONDITIONAL ROUTING LOOP: Separates title views from photo layouts */}
         {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) => {
           if (item.type === 'title') {
             return (
