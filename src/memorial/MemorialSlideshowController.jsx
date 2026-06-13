@@ -123,14 +123,14 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
       }}
     >
       <div style={{ maxWidth: '90%', width: '1120px' }}>
-        <div style={{ color: '#d9bf8d', fontSize: '20px', letterSpacing: '5px', textTransform: 'uppercase', marginBottom: '20px' }}>
+        <div style={{ color: '#d9bf8d', fontSize: '18px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px' }}>
           {section.eyebrow}
         </div>
-        <div style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(32px, 6vw, 84px)', lineHeight: 1.1, fontWeight: 400, transform: `translateY(${titleY}px)` }}>
+        <div style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(24px, 4vw, 64px)', lineHeight: 1.2, fontWeight: 400, transform: `translateY(${titleY}px)` }}>
           {section.title}
         </div>
-        <div style={{ width: ruleWidth, height: '2px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '24px auto' }} />
-        <div style={{ fontSize: 'clamp(16px, 2vw, 24px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.78)' }}>
+        <div style={{ width: ruleWidth, height: '1px', background: 'linear-gradient(90deg, transparent, #d9bf8d, transparent)', margin: '16px auto' }} />
+        <div style={{ fontSize: 'clamp(14px, 1.5vw, 20px)', lineHeight: 1.4, color: 'rgba(255,255,255,0.78)' }}>
           {section.subtitle}
         </div>
       </div>
@@ -141,7 +141,7 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   return (
     <CinematicPhotoSlide
-      photo={item.photo} // FIXED: Correctly targeting item.photo instead of the undefined standalone variable
+      photo={item.photo} 
       frame={slideFrame}
       slideIndex={item.slideIndex}
       frameShape={item.section.frameShape}
@@ -151,7 +151,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// 1. PROFESSIONAL SLOW-DRIFT CROSS COMPONENT
 const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
   return (
     <svg
@@ -178,7 +177,6 @@ const AscendingCrossParticle = ({ delay, startX, driftX, targetY }) => {
   );
 };
 
-// 2. ULTRA-FINE GOLD DUST COMPONENT
 const GoldDustParticle = ({ angle, delay, distance, size }) => {
   const cos = Math.cos((angle * Math.PI) / 180);
   const sin = Math.sin((angle * Math.PI) / 180);
@@ -214,11 +212,84 @@ const Background = ({ funeralHomeName, lovedOneName, frame }) => {
     <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 16% 18%, rgba(154,178,177,0.26), transparent 24%), radial-gradient(circle at 86% 76%, rgba(217,191,141,0.18), transparent 28%), linear-gradient(135deg, #101417 0%, #243136 48%, #121517 100%)', zIndex: -1 }}>
       <div style={{ position: 'absolute', inset: '3%', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 0 140px rgba(0,0,0,0.22)' }} />
       <div style={{ position: 'absolute', top: 0, right: '15%', width: '2px', height: '100%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.32), transparent)', opacity: shimmer }} />
-      <div style={{ position: 'absolute', left: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-        {funeralHomeName}
+    </div>
+  );
+};
+
+// --- MOBILE SPLIT-SCREEN CHAT MODULE ---
+const MobileLiveChatFeed = ({ uploads }) => {
+  const chatEndRef = useRef(null);
+
+  // Auto-scrolls chat feed to keep the newest uploads visible
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [uploads]);
+
+  return (
+    <div
+      className="mobile-chat-container"
+      style={{
+        flex: '1 1 50%',
+        background: '#14191c',
+        borderTop: '2px solid rgba(217,191,141,0.35)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxSizing: 'border-box'
+      }}
+    >
+      {/* Live Stream Title Sub-Bar */}
+      <div style={{ background: '#192124', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '8px', height: '8px', backgroundColor: '#4ade80', borderRadius: '50%', boxShadow: '0 0 8px #4ade80' }} />
+          <span style={{ fontSize: '13px', fontFamily: 'Georgia, serif', color: '#d9bf8d', letterSpacing: '1px', textTransform: 'uppercase' }}>Guestbook Activity Stream</span>
+        </div>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{uploads.length} entries</span>
       </div>
-      <div style={{ position: 'absolute', right: '4%', bottom: '4%', color: 'rgba(255,255,255,0.58)', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-        {lovedOneName}
+
+      {/* Message Feed Area */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {uploads.map((msg, idx) => {
+          const imgUrl = resolveImageSource(msg.image_url);
+          return (
+            <div 
+              key={msg.id || idx} 
+              style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '10px 14px', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(255,255,255,0.03)',
+                animation: 'fadeInUp 0.4s ease-out forwards'
+              }}
+            >
+              {imgUrl && (
+                <img 
+                  src={imgUrl} 
+                  style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(217,191,141,0.2)' }} 
+                  alt="" 
+                />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                  <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '14px', fontWeight: 500 }}>
+                    {msg.sender_name || 'Anonymous'}
+                  </span>
+                  <svg viewBox="0 0 24 24" style={{ width: '11px', height: '11px', fill: 'rgba(217,191,141,0.6)' }}>
+                    <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
+                  </svg>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.4, margin: 0 }}>
+                  {msg.message_text}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={chatEndRef} />
       </div>
     </div>
   );
@@ -333,33 +404,15 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     >
       <style>{`
         @keyframes crossSlowAscend {
-          0% {
-            transform: translate(var(--startX), 0);
-            opacity: 0;
-          }
-          15% {
-            opacity: 0.85;
-          }
-          75% {
-            opacity: 0.60;
-          }
-          100% {
-            transform: translate(var(--driftX), var(--targetY));
-            opacity: 0;
-          }
+          0% { transform: translate(var(--startX), 0); opacity: 0; }
+          15% { opacity: 0.85; }
+          75% { opacity: 0.60; }
+          100% { transform: translate(var(--driftX), var(--targetY)); opacity: 0; }
         }
         @keyframes dustScatter {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0;
-          }
-          15% {
-            opacity: 0.9;
-          }
-          100% {
-            transform: translate(var(--tx), var(--ty)) scale(0.2);
-            opacity: 0;
-          }
+          0% { transform: translate(0, 0) scale(1); opacity: 0; }
+          15% { opacity: 0.9; }
+          100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
         }
       `}</style>
 
@@ -367,15 +420,15 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
         style={{
           position: 'relative',
           width: 'fit-content',
-          minWidth: '450px',    
-          maxWidth: '85vw',
-          minHeight: '110px',
+          minWidth: '320px',    
+          maxWidth: '90vw',
+          minHeight: '90px',
           opacity,
           transform: `translate(${translateX}px, ${translateY}px)`,
           display: 'flex',
           alignItems: 'center',
-          gap: '20px',
-          padding: '16px 24px',
+          gap: '16px',
+          padding: '12px 20px',
           background: 'rgba(18,23,25,0.95)',
           border: '1px solid rgba(217,191,141,0.42)',
           boxShadow: '0 15px 35px rgba(0,0,0,0.4)',
@@ -385,9 +438,9 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
       >
         <div
           style={{
-            width: '75px',
-            height: '75px',
-            flex: '0 0 75px',
+            width: '60px',
+            height: '60px',
+            flex: '0 0 60px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -400,13 +453,13 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
           {imageSource ? (
             <img src={imageSource} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
           ) : (
-            <div style={{ color: 'rgba(255,255,255,0.52)', fontFamily: 'Georgia, serif', fontSize: '24px' }}>+</div>
+            <div style={{ color: 'rgba(255,255,255,0.52)', fontFamily: 'Georgia, serif', fontSize: '20px' }}>+</div>
           )}
         </div>
         
         <div style={{ minWidth: 0, flex: 1, position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', position: 'relative', width: 'fit-content' }}>
-            <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '22px', lineHeight: 1.1, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '18px', lineHeight: 1.1, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {activeUpload.sender_name || 'Guest'}
             </span>
 
@@ -414,10 +467,10 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
               <svg
                 viewBox="0 0 24 24"
                 style={{
-                  width: '18px',
-                  height: '18px',
+                  width: '16px',
+                  height: '16px',
                   fill: '#d9bf8d',
-                  marginLeft: '12px',
+                  marginLeft: '10px',
                   marginBottom: '2px',
                   filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
                   transition: 'opacity 0.25s ease-out',
@@ -449,8 +502,8 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
             </div>
           </div>
 
-          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '16px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {activeUpload.message_text || 'Shared a memory in loving tribute.'}
+          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '14px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {activeUpload.message_text || 'Shared a memory.'}
           </div>
         </div>
       </div>
@@ -468,7 +521,18 @@ export const MemorialSlideshowController = ({
   liveTributesSeed = [],
 }) => {
   const [frame, setFrame] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const lastTimeRef = useRef(Date.now());
+
+  // Detect window resizing to dynamically toggle full-screen vs split-screen
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize(); // Initial run
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     let animationFrameId;
@@ -502,6 +566,7 @@ export const MemorialSlideshowController = ({
 
   return (
     <div
+      className="slideshow-master-viewport"
       style={{
         position: 'fixed',
         inset: 0,
@@ -510,27 +575,52 @@ export const MemorialSlideshowController = ({
         overflow: 'hidden',
         background: '#101417',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: isMobile ? 'column' : 'row', // Columns on mobile split, flat row layouts elsewhere
         width: '100vw',
         height: '100vh',
         boxSizing: 'border-box'
       }}
     >
+      {/* Global CSS Injection for Mobile Fade Animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
       <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
       
-      <div style={{ flex: '0 0 80%', width: '100%', position: 'relative', overflow: 'hidden' }}>
-        {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
-          item.type === 'title' ? (
-            <SectionTitleCard key={`${item.id}-${item.start}`} section={item.section} frame={itemFrame} opacity={opacity} />
-          ) : (
-            <SectionPhotoPlayer key={`${item.id}-${item.start}`} item={item} slideFrame={itemFrame} opacity={opacity} isEntering={isEntering} />
-          )
+      {/* LEFT SIDE / TOP HALF: THE CINEMATIC MEDIA CONTROLLER */}
+      <div 
+        style={{ 
+          flex: isMobile ? '0 0 50%' : '0 0 100%', 
+          width: isMobile ? '100%' : '100%', 
+          height: isMobile ? '50%' : '100%',
+          position: 'relative', 
+          overflow: 'hidden' 
+        }}
+      >
+        <div style={{ position: 'absolute', inset: 0, bottom: isMobile ? 0 : '20%', overflow: 'hidden' }}>
+          {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) =>
+            item.type === 'title' ? (
+              <SectionTitleCard key={`${item.id}-${item.start}`} section={item.section} frame={itemFrame} opacity={opacity} />
+            ) : (
+              <SectionPhotoPlayer key={`${item.id}-${item.start}`} item={item} slideFrame={itemFrame} opacity={opacity} isEntering={isEntering} />
+            )
+          )}
+        </div>
+
+        {/* Hide running ticker ticker overlay entirely when mobile split chat view is engaged */}
+        {!isMobile && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', zIndex: 50 }}>
+            <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+          </div>
         )}
       </div>
 
-      <div style={{ flex: '0 0 20%', width: '100%', position: 'relative', zIndex: 50 }}>
-        <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
-      </div>
+      {/* RIGHT SIDE / BOTTOM HALF: ACTIVE LIVE CHAT RENDERING WINDOW */}
+      {isMobile && <MobileLiveChatFeed uploads={lowerThirdUploads} />}
     </div>
   );
 };
