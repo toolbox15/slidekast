@@ -46,7 +46,7 @@ const buildPlaybackItems = (timeline) => {
         type: 'photo',
         section,
         photo,
-        slideIndex: index,
+        slideIndex: index, // Captures position index inside this specific gallery folder branch
         start: cursor,
         duration: PHOTO_SLIDE_FRAMES,
         end: cursor + PHOTO_SLIDE_FRAMES,
@@ -138,11 +138,13 @@ const SectionTitleCard = ({ section, frame, opacity }) => {
   );
 };
 
+// FIXED COUPLING: Delivers slideIndex directly to layout engine for automated style mixups
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   return (
     <CinematicPhotoSlide
       photo={item.photo}
       frame={slideFrame}
+      slideIndex={item.slideIndex} // PASS THROUGH KEY: Unlocks left/right flips and centerpiece layouts
       frameShape={item.section.frameShape}
       opacity={opacity}
       isEntering={isEntering}
@@ -150,7 +152,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// FIXED LOWER THIRD: Snaps frame borders tightly around text layout length dynamically
 const LiveTributeLowerThird = ({ uploads, frame }) => {
   const liveUploads = useMemo(
     () => uploads.length > 0 ? uploads : [{
@@ -201,8 +202,8 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     >
       <div
         style={{
-          width: 'fit-content', // Squeezes the width to frame content precisely with zero trailing gaps
-          minWidth: '450px',    // Solid base width anchor so very short names still look layout-balanced
+          width: 'fit-content',
+          minWidth: '450px',    
           maxWidth: '85vw',
           minHeight: '110px',
           opacity,
