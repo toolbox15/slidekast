@@ -1,34 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebase/config"; // Adjust this path to match your firebase config file location
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig"; // FIXED: Matched your project's exact case-sensitive root filename
+import { doc, updateDoc } from "firebase/firestore";
 
-export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
-  const [loading, setLoading] = useState(true);
-  const [earlyYears, setEarlyYears] = useState([]);
-  const [family, setFamily] = useState([]);
-  const [legacy, setLegacy] = useState([]);
+export const MemorialAdminDashboard = ({ 
+  eventId = "smith-wedding-2026",
+  initialEarlyYears = [],
+  initialFamily = [],
+  initialLegacy = []
+}) => {
+  // FIXED: Set state dynamically using the incoming props passed from main.jsx
+  const [earlyYears, setEarlyYears] = useState(initialEarlyYears);
+  const [family, setFamily] = useState(initialFamily);
+  const [legacy, setLegacy] = useState(initialLegacy);
   const [activeTab, setActiveTab] = useState("earlyYears");
 
-  // Load the current slideshow data from Firestore on mount
-  useEffect(() => {
-    const fetchEventData = async () => {
-      try {
-        const docRef = doc(db, "events", eventId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setEarlyYears(data.earlyYearsPhotos || []);
-          setFamily(data.familyPhotos || []);
-          setLegacy(data.legacyPhotos || []);
-        }
-      } catch (error) {
-        console.error("Error loading Firestore document:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEventData();
-  }, [eventId]);
+  // Keep the form inputs perfectly in sync if the background Firestore stream updates
+  useEffect(() => { setEarlyYears(initialEarlyYears); }, [initialEarlyYears]);
+  useEffect(() => { setFamily(initialFamily); }, [initialFamily]);
+  useEffect(() => { setLegacy(initialLegacy); }, [initialLegacy]);
 
   // Unified save function to push the structured maps back to Firestore
   const saveToFirestore = async (updatedArray, fieldName) => {
@@ -67,14 +56,6 @@ export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
 
     setArray(copy);
   };
-
-  if (loading) {
-    return (
-      <div style={{ padding: 40, color: "#fff", background: "#0d1113", minHeight: "100vh", fontFamily: "sans-serif" }}>
-        Loading Layout Control Panel Engine...
-      </div>
-    );
-  }
 
   const currentList = activeTab === "earlyYears" ? earlyYears : activeTab === "family" ? family : legacy;
   const currentSetter = activeTab === "earlyYears" ? setEarlyYears : activeTab === "family" ? setFamily : setLegacy;
@@ -123,7 +104,6 @@ export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
       {/* Main Slide Editor Loop Container */}
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {currentList.map((item, index) => {
-          // Normalize shape structure standard for rendering form inputs nicely
           const slideData = typeof item === "string" ? { primary_url: item, layoutType: "full-screen", caption: "", textStyle: "classic-serif", sibling_urls: [] } : item;
           const siblingUrl = slideData.sibling_urls?.[0] || "";
 
@@ -149,7 +129,7 @@ export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
                 )}
               </div>
 
-              {/* Graphical Control Anchor Form inputs */}
+              {/* Graphical Control Inputs */}
               <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 
                 {/* 1. Media Source Fields */}
@@ -163,7 +143,7 @@ export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
                   />
                 </div>
 
-                {/* 2. Motion Profile Selector (Replaces Manual Text Entry!) */}
+                {/* 2. Motion Profile Selector */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "12px", color: "#d9bf8d", textTransform: "uppercase", letterSpacing: "1px" }}>Motion & Composition Framework</label>
                   <select
@@ -201,7 +181,7 @@ export const MemorialAdminDashboard = ({ eventId = "smith-wedding-2026" }) => {
                   </select>
                 </div>
 
-                {/* Conditional Secondary Sibling Image Loader Input */}
+                {/* Conditional Secondary Sibling Image Input */}
                 {slideData.layoutType === "split-portrait" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px", gridColumn: "span 2" }}>
                     <label style={{ fontSize: "12px", color: "#e2e8f0", textTransform: "uppercase", letterSpacing: "1px" }}>Secondary Right-Side Portrait Image Link</label>
