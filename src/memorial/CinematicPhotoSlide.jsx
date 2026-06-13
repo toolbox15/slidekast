@@ -1,5 +1,5 @@
 import { interpolate } from "remotion";
-import React from "react";
+import React, { useMemo } from "react";
 import { HandwritingMessage } from "./HandwritingMessage";
 import {
   PHOTO_SLIDE_FRAMES,
@@ -21,22 +21,22 @@ export const CinematicPhotoSlide = ({
   const name = photo?.sender_name || "";
   const message = photo?.message_text || "";
   const caption = photo?.caption || "";
-  const radius = frameShape === "oval" ? "50%" : "16px";
+  const radius = frameShape === "oval" ? "50%" : "12px";
 
-  // Pure mathematical pan and zoom factors driven by your controller frame loop
-  const imageScale = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [1.02, 1.12], {
+  // 1. Continuous Floating Motion Mechanics
+  const motionScale = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [1.01, 1.08], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const imageY = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [0, -15], {
+  const motionTranslateY = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [4, -12], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const frameGlow = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [0.2, 0.4], {
+  const alternateMotionScale = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [1.07, 1.01], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  
+
   const textFrame = Math.max(0, frame - TEXT_REVEAL_DELAY);
   const textOpacity = interpolate(textFrame, [0, TEXT_REVEAL_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
@@ -48,6 +48,20 @@ export const CinematicPhotoSlide = ({
   });
   const handwritingFrame = Math.max(0, textFrame - 4);
 
+  // 2. Multi-Image Parsing Architecture
+  // If your Firestore contains sibling images or if we split a vertical chain:
+  const photoCluster = useMemo(() => {
+    if (!imgUrl) return [];
+    // If multiple URLs are packed or passed via a custom layout field, split them.
+    // Otherwise, we default to treating the single incoming photo intelligently.
+    if (photo?.sibling_urls && Array.isArray(photo.sibling_urls)) {
+      return [imgUrl, ...photo.sibling_urls.map(url => resolveImageSource(url))];
+    }
+    return [imgUrl];
+  }, [imgUrl, photo]);
+
+  const isMultiDisplay = photoCluster.length > 1;
+
   return (
     <div
       style={{
@@ -58,7 +72,7 @@ export const CinematicPhotoSlide = ({
         backgroundColor: "#0d1113",
       }}
     >
-      {/* 1. Immersive Blurred Ambient Glow Plate */}
+      {/* Immersive Ambient Blur Background Plate */}
       {imgUrl ? (
         <img
           src={imgUrl}
@@ -70,80 +84,71 @@ export const CinematicPhotoSlide = ({
             height: "calc(100% + 80px)",
             objectFit: "cover",
             objectPosition: "center",
-            filter: "blur(60px) brightness(0.25) saturate(1.1)",
-            transform: `scale(1.1)`,
-            opacity: 0.85,
+            filter: "blur(55px) brightness(0.22) saturate(1.05)",
+            opacity: 0.88,
           }}
         />
       ) : null}
 
-      {/* 2. Primary Hero Presentation Frame */}
+      {/* Primary Responsive Workspace */}
       <div
         style={{
           position: "absolute",
-          // Safely locks the main picture inside the top 75% workspace, leaving room for text
-          inset: "4% 6% 160px",
+          inset: "4% 5% 180px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          gap: "40px", // Breathing room between side-by-side portrait configurations
         }}
       >
-        <div
-          style={{
-            position: "relative",
-            width: frameShape === "oval" ? "min(55vh, 100%)" : "100%",
-            height: "100%",
-            maxWidth: "1160px",
-            overflow: "hidden",
-            borderRadius: radius,
-            border: "1px solid rgba(217,191,141,0.45)",
-            background: "rgba(16, 21, 23, 0.6)",
-            boxShadow: `0 30px 70px rgba(0,0,0,0.65), 0 0 ${30 + frameGlow * 30}px rgba(217,191,141,0.15)`,
-          }}
-        >
-          {imgUrl ? (
-            <img
-              src={imgUrl}
-              alt={caption}
-              style={{
-                width: "100%",
-                height: "100%",
-                // Cover fills the golden container frame with premium presence
-                objectFit: frameShape === "oval" ? "cover" : "contain",
-                objectPosition: "center 35%",
-                transform: `scale(${imageScale}) translateY(${imageY}px)`,
-                filter: "contrast(1.02) saturate(0.98)",
-              }}
-            />
-          ) : (
+        {photoCluster.map((url, idx) => {
+          // Alternate the scale direction for multi-image sets so they look individually custom animated
+          const computedScale = idx % 2 === 0 ? motionScale : alternateMotionScale;
+          const computedY = idx % 2 === 0 ? motionTranslateY : -motionTranslateY;
+
+          return (
             <div
+              key={idx}
               style={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "40px",
+                position: "relative",
+                display: "inline-block",
+                maxHeight: "100%",
+                maxWidth: isMultiDisplay ? "48%" : "100%",
+                borderRadius: radius,
+                border: "1px solid rgba(217,191,141,0.48)",
+                background: "rgba(14, 19, 21, 0.7)",
+                padding: "12px",
                 boxSizing: "border-box",
-                color: "rgba(255,255,255,0.85)",
-                fontFamily: "Georgia, serif",
-                fontSize: "36px",
-                lineHeight: 1.3,
-                textAlign: "center",
-                fontStyle: "italic"
+                boxShadow: "0 25px 65px rgba(0,0,0,0.7), 0 0 35px rgba(217,191,141,0.12)",
+                overflow: "hidden",
+                transform: `scale(${computedScale}) translateY(${computedY}px)`,
+                transition: "transform 0.03s linear",
               }}
             >
-              {caption}
+              <img
+                src={url}
+                alt=""
+                style={{
+                  display: "block",
+                  maxWidth: "100%",
+                  maxHeight: "72vh", // Keeps the outline completely clamped to image boundaries
+                  width: "auto",
+                  height: "auto",
+                  objectFit: "contain",
+                  borderRadius: frameShape === "oval" ? "50%" : "6px",
+                  filter: "contrast(1.01) saturate(0.99)",
+                }}
+              />
             </div>
-          )}
-        </div>
+          );
+        })}
       </div>
 
-      {/* 3. High-End Typography Overlay Zone */}
+      {/* High-End Cinematic Typography Shield Zone */}
       <div
         style={{
           position: "absolute",
-          bottom: "35px",
+          bottom: "40px",
           left: 0,
           width: "100%",
           display: "flex",
@@ -151,11 +156,11 @@ export const CinematicPhotoSlide = ({
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: "0 60px",
+          padding: "0 80px",
           boxSizing: "border-box",
           opacity: message ? 1 : textOpacity,
           transform: `translateY(${textY}px)`,
-          zIndex: 20,
+          zIndex: 30,
         }}
       >
         {message ? (
@@ -169,13 +174,13 @@ export const CinematicPhotoSlide = ({
             <p
               style={{
                 fontFamily: "Georgia, serif",
-                fontSize: "34px",
+                fontSize: "36px",
                 fontStyle: "italic",
                 color: "#f8fafc",
-                margin: "0 0 8px",
-                lineHeight: 1.3,
-                textShadow: "0 3px 10px rgba(0,0,0,0.95)",
-                maxWidth: "1000px",
+                margin: "0 0 10px",
+                lineHeight: 1.35,
+                textShadow: "0 3px 12px rgba(0,0,0,0.95)",
+                maxWidth: "1100px",
                 fontWeight: "300"
               }}
             >
@@ -185,8 +190,8 @@ export const CinematicPhotoSlide = ({
               <h3
                 style={{
                   color: "#d9bf8d",
-                  fontSize: "16px",
-                  letterSpacing: "5px",
+                  fontSize: "15px",
+                  letterSpacing: "6px",
                   textTransform: "uppercase",
                   margin: 0,
                   fontWeight: "400",
