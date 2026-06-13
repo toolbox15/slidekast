@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebaseConfig"; // FIXED: Matched your project's exact case-sensitive root filename
+import { db } from "../firebaseConfig"; 
 import { doc, updateDoc } from "firebase/firestore";
 
 export const MemorialAdminDashboard = ({ 
@@ -8,18 +8,15 @@ export const MemorialAdminDashboard = ({
   initialFamily = [],
   initialLegacy = []
 }) => {
-  // FIXED: Set state dynamically using the incoming props passed from main.jsx
   const [earlyYears, setEarlyYears] = useState(initialEarlyYears);
   const [family, setFamily] = useState(initialFamily);
   const [legacy, setLegacy] = useState(initialLegacy);
   const [activeTab, setActiveTab] = useState("earlyYears");
 
-  // Keep the form inputs perfectly in sync if the background Firestore stream updates
   useEffect(() => { setEarlyYears(initialEarlyYears); }, [initialEarlyYears]);
   useEffect(() => { setFamily(initialFamily); }, [initialFamily]);
   useEffect(() => { setLegacy(initialLegacy); }, [initialLegacy]);
 
-  // Unified save function to push the structured maps back to Firestore
   const saveToFirestore = async (updatedArray, fieldName) => {
     try {
       const docRef = doc(db, "events", eventId);
@@ -36,7 +33,6 @@ export const MemorialAdminDashboard = ({
   const updateSlideProperty = (array, setArray, index, property, value, fieldName) => {
     const copy = [...array];
     
-    // Ensure we convert any lingering raw strings into our advanced control map structure safely
     if (typeof copy[index] === "string") {
       copy[index] = {
         primary_url: copy[index],
@@ -47,7 +43,6 @@ export const MemorialAdminDashboard = ({
       };
     }
 
-    // Handle updating nested sibling array URLs vs normal string fields
     if (property === "sibling_url_0") {
       copy[index]["sibling_urls"] = value ? [value] : [];
     } else {
@@ -64,10 +59,10 @@ export const MemorialAdminDashboard = ({
   return (
     <div style={{ background: "#0d1113", color: "#f8fafc", minHeight: "100vh", fontFamily: "sans-serif", padding: "40px" }}>
       
-      {/* Header Panel */}
+      {/* Header Panel — Fixed Branding */}
       <div style={{ borderBottom: "1px solid rgba(217,191,141,0.3)", paddingBottom: "20px", marginBottom: "30px" }}>
         <h1 style={{ color: "#d9bf8d", margin: "0 0 10px 0", fontSize: "28px", letterSpacing: "1px" }}>
-          ScreenXcel Director Studio
+          SlideKast Director Studio
         </h1>
         <p style={{ color: "#94a3b8", margin: 0, fontSize: "14px" }}>
           Granular Visual Control Panel for Event ID: <strong style={{ color: "#fff" }}>{eventId}</strong>
@@ -132,7 +127,6 @@ export const MemorialAdminDashboard = ({
               {/* Graphical Control Inputs */}
               <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 
-                {/* 1. Media Source Fields */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "12px", color: "#d9bf8d", textTransform: "uppercase", letterSpacing: "1px" }}>Primary Photo Image Link</label>
                   <input
@@ -143,7 +137,6 @@ export const MemorialAdminDashboard = ({
                   />
                 </div>
 
-                {/* 2. Motion Profile Selector */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "12px", color: "#d9bf8d", textTransform: "uppercase", letterSpacing: "1px" }}>Motion & Composition Framework</label>
                   <select
@@ -156,7 +149,6 @@ export const MemorialAdminDashboard = ({
                   </select>
                 </div>
 
-                {/* 3. Caption Copy Field */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "12px", color: "#d9bf8d", textTransform: "uppercase", letterSpacing: "1px" }}>Overlay Caption Text</label>
                   <input
@@ -168,7 +160,6 @@ export const MemorialAdminDashboard = ({
                   />
                 </div>
 
-                {/* 4. Font Typography Rule Matcher */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "12px", color: "#d9bf8d", textTransform: "uppercase", letterSpacing: "1px" }}>Typography Design Engine Style</label>
                   <select
@@ -181,7 +172,6 @@ export const MemorialAdminDashboard = ({
                   </select>
                 </div>
 
-                {/* Conditional Secondary Sibling Image Input */}
                 {slideData.layoutType === "split-portrait" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px", gridColumn: "span 2" }}>
                     <label style={{ fontSize: "12px", color: "#e2e8f0", textTransform: "uppercase", letterSpacing: "1px" }}>Secondary Right-Side Portrait Image Link</label>
