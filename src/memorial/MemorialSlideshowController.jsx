@@ -148,35 +148,35 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
           inset: 0,
           opacity,
           display: 'flex', 
-          flexDirection: 'row', 
+          flexDirection: 'column', // FIXED: Stacks wide image on top, text details safely below
           alignItems: 'center', 
-          justifyContent: 'space-between', 
+          justifyContent: 'center', 
           width: '100%', 
           height: '100%', 
-          padding: '16px', 
+          padding: '12px', 
           boxSizing: 'border-box',
-          backgroundColor: '#000000'
+          backgroundColor: '#000000',
+          gap: '8px'
         }}
       >
-        {/* Adjusted Left Container: Holds 60% with full centering */}
-        <div style={{ width: '60%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {/* Top Section: Stretches the landscape layout edge-to-edge */}
+        <div style={{ width: '100%', height: '70%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <img 
             src={resolveImageSource(item.photo.image_url)} 
             alt="" 
             style={{
               width: '100%',
-              height: 'auto',
-              maxHeight: '95%',
-              objectFit: 'contain',
+              height: '100%',
+              objectFit: 'contain', // Keeps photo layout proportional without crushing dimensions
               borderRadius: '6px',
-              border: '1px solid rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.1)',
               boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
             }}
           />
         </div>
 
-        {/* Adjusted Right Container: Holds 35% of horizontal room safely */}
-        <div style={{ width: '35%', paddingLeft: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {/* Bottom Section: Balanced descriptive text centered directly below photo */}
+        <div style={{ width: '100%', height: '25%', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 style={{ 
             fontSize: '1.25rem', 
             margin: '0 0 2px 0', 
@@ -185,14 +185,13 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
             lineHeight: '1.2',
             fontWeight: '400'
           }}>
-            {item.section.title}
+            {item.photo.caption || item.section.title}
           </h2>
           <span style={{ 
             fontSize: '0.95rem', 
             fontWeight: 'bold',
             color: '#d9bf8d',
-            fontFamily: 'monospace',
-            opacity: 0.8
+            fontFamily: 'sans-serif'
           }}>
             Slide {item.slideIndex + 1}
           </span>
@@ -718,7 +717,7 @@ export const MemorialSlideshowController = ({
 
       <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
       
-      {/* LEFT SIDE / TOP HALF: THE CINEMATIC MEDIA CONTROLLER */}
+      {/* LEFT SIDE / TOP HALF: CINEMATIC REEL CONTAINER */}
       <div 
         style={{ 
           flex: isMobile ? '0 0 40%' : '0 0 100%', 
@@ -730,7 +729,7 @@ export const MemorialSlideshowController = ({
           borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        {/* FIX: Conditional single-component layer checks to halt overlapping text collisions */}
+        {/* FIXED CONDITIONAL ROUTING LOOP: Completely splits title views from photo layouts to stop overlaps */}
         {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) => {
           if (item.type === 'title') {
             return (
@@ -762,7 +761,7 @@ export const MemorialSlideshowController = ({
         )}
       </div>
 
-      {/* RIGHT SIDE / BOTTOM HALF: CHAT STREAM COMPONENT */}
+      {/* RIGHT SIDE / BOTTOM HALF: ACTIVE INTERACTION FEEDS */}
       {isMobile && (
         <MobileLiveChatFeed 
           uploads={lowerThirdUploads} 
@@ -771,7 +770,7 @@ export const MemorialSlideshowController = ({
         />
       )}
 
-      {/* FIXED FLOATING ATTRIBUTION MARKER: Locked to 100% Solid Opacity with sharp framing layouts */}
+      {/* FLOATING ACTION BRANDING: Locked to a clean, crisp 100% Solid Opacity badge shape */}
       {isMobile && (
         <a 
           href="https://slidekast.com" 
