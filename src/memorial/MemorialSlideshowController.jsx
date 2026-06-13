@@ -151,171 +151,32 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering }) => {
   );
 };
 
-// --- PREMIUM EMBEDDED GOLDEN CROSS ELEMENT ---
-const GoldenCrossParticle = ({ delay, scale, startX }) => (
-  <svg
-    viewBox="0 0 24 24"
-    style={{
-      position: 'absolute',
-      bottom: '115px', // Fires upwards from the top edge boundary
-      left: `${startX}px`,
-      width: '24px',
-      height: '24px',
-      fill: '#d9bf8d', // Matches your exact blueprint gold tone
-      filter: 'drop-shadow(0 0 8px rgba(217,191,141,0.6))', // Gives it a gentle glowing aura
-      pointerEvents: 'none',
-      animation: `crossAscend 3.5s cubic-bezier(0.215, 0.610, 0.355, 1) ${delay}s forwards`,
-      transform: `scale(${scale})`,
-    }}
-  >
-    {/* Classical Latin Cross Silhouette Shape Geometry */}
-    <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
-  </svg>
-);
-
-const LiveTributeLowerThird = ({ uploads, frame }) => {
-  const [crossBursts, setCrossBursts] = useState([]);
-
-  const liveUploads = useMemo(
-    () => uploads.length > 0 ? uploads : [{
-      id: 'awaiting-live-tribute',
-      image_url: '',
-      sender_name: 'Guestbook',
-      message_text: 'Your memories will appear here.',
-    }],
-    [uploads]
-  );
-
-  const activeIndex = Math.floor(frame / LIVE_LOWER_THIRD_FRAMES) % liveUploads.length;
-  const activeUpload = liveUploads[activeIndex];
-  const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
-  const imageSource = resolveImageSource(activeUpload.image_url);
-
-  // TIMING RESOLUTION: Wait until itemFrame hits 60 (~2 seconds) so the card is completely on-screen
-  useEffect(() => {
-    if (!activeUpload?.id) return;
-
-    // Generate a fresh set of cross parameters
-    const newCrosses = Array.from({ length: 4 }).map((_, i) => ({
-      id: `${activeUpload.id}-cross-${i}-${Date.now()}`,
-      delay: i * 0.4,                    // Softly staggered exit launch spacing
-      scale: 0.7 + Math.random() * 0.4,  // Varied sizes for depth separation
-      startX: 60 + Math.random() * 320,  // Disperses them elegantly across the card surface
-    }));
-
-    // We use a timer to schedule the state push right when the layout is fully viewable
-    const scheduleTimer = setTimeout(() => {
-      setCrossBursts((prev) => [...prev, ...newCrosses].slice(-16));
-    }, 1800); // Delays execution until the translation animation sequence settles
-
-    return () => clearTimeout(scheduleTimer);
-  }, [activeIndex, activeUpload?.id]);
-
-  const translateX = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES], [-1100, 1100], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  
-  const translateY = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES / 2, LIVE_LOWER_THIRD_FRAMES], [10, -10, 10], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  const opacity = linearInterpolate(itemFrame, [0, 54, LIVE_LOWER_THIRD_FRAMES - 64, LIVE_LOWER_THIRD_FRAMES], [0, 1, 1, 0], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+// --- SCALABLE DISPERSION SPARK COMPONENT ---
+const CrossParticleSpark = ({ angle, delay, distance }) => {
+  const cos = Math.cos((angle * Math.PI) / 180);
+  const sin = Math.sin((angle * Math.PI) / 180);
+  const targetX = (distance * cos).toFixed(1);
+  const targetY = (distance * sin - 80).toFixed(1); // Drives the direction upward
 
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(90deg, rgba(10,14,16,0.18), rgba(10,14,16,0.85) 18%, rgba(10,14,16,0.9) 50%, rgba(10,14,16,0.85) 82%, rgba(10,14,16,0.18))',
-        borderTop: '1px solid rgba(217,191,141,0.28)',
-        boxShadow: '0 -15px 50px rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(12px)',
-        overflow: 'visible', 
+        position: 'absolute',
+        top: '20px',
+        left: '100%',
+        marginLeft: '12px',
+        width: '4px',
+        height: '4px',
+        backgroundColor: '#d9bf8d',
+        borderRadius: '50%',
+        boxShadow: '0 0 6px #d9bf8d, 0 0 12px #ffffff',
         pointerEvents: 'none',
+        animation: `sparkScatter 1.4s cubic-bezier(0.1, 0.8, 0.3, 1) ${delay}s forwards`,
+        opacity: 0,
+        '--tx': `${targetX}px`,
+        '--ty': `${targetY}px`,
       }}
-    >
-      {/* CASCADING GLOW KEYFRAME ANIMATION SCENARIOS */}
-      <style>{`
-        @keyframes crossAscend {
-          0% {
-            transform: translateY(0) scale(0.5) rotate(0deg);
-            opacity: 0;
-          }
-          15% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-480px) translateX(25px) scale(1) rotate(5deg);
-            opacity: 0;
-            filter: drop-shadow(0 0 15px rgba(217,191,141,0));
-          }
-        }
-      `}</style>
-
-      <div
-        style={{
-          position: 'relative',
-          width: 'fit-content',
-          minWidth: '450px',    
-          maxWidth: '85vw',
-          minHeight: '110px',
-          opacity,
-          transform: `translate(${translateX}px, ${translateY}px)`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px',
-          padding: '16px 24px',
-          background: 'rgba(18,23,25,0.95)',
-          border: '1px solid rgba(217,191,141,0.42)',
-          boxShadow: '0 15px 35px rgba(0,0,0,0.4)',
-          borderRadius: '8px',
-          boxSizing: 'border-box'
-        }}
-      >
-        {/* RENDER ACTIVE ASCENDING EMBEDDED GOLD CROSS BURSTS */}
-        {crossBursts.map((cross) => (
-          <GoldenCrossParticle key={cross.id} delay={cross.delay} scale={cross.scale} startX={cross.startX} />
-        ))}
-
-        <div
-          style={{
-            width: '75px',
-            height: '75px',
-            flex: '0 0 75px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.18)',
-            borderRadius: '6px',
-          }}
-        >
-          {imageSource ? (
-            <img src={imageSource} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
-          ) : (
-            <div style={{ color: 'rgba(255,255,255,0.52)', fontFamily: 'Georgia, serif', fontSize: '24px' }}>+</div>
-          )}
-        </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '22px', lineHeight: 1.1, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {activeUpload.sender_name || 'Guest'}
-          </div>
-          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '16px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {activeUpload.message_text || 'Shared a memory in loving tribute.'}
-          </div>
-        </div>
-      </div>
-    </div>
+    />
   );
 };
 
@@ -368,6 +229,178 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
       { image_url: '', caption: section.title, sender_name: '', message_text: '' }
     ],
   }));
+};
+
+// LIVE LOWER THIRD WITH CONTEXT PARTICLE DISPERSION ENGINE
+const LiveTributeLowerThird = ({ uploads, frame }) => {
+  const seenMessageIds = useRef(new Set());
+  const currentMessageIdRef = useRef(null);
+  const [isFirstTime, setIsFirstTime] = useState(false);
+
+  const liveUploads = useMemo(
+    () => uploads.length > 0 ? uploads : [{
+      id: 'awaiting-live-tribute',
+      image_url: '',
+      sender_name: 'Guestbook',
+      message_text: 'Your memories will appear here.',
+    }],
+    [uploads]
+  );
+
+  const activeIndex = Math.floor(frame / LIVE_LOWER_THIRD_FRAMES) % liveUploads.length;
+  const activeUpload = liveUploads[activeIndex];
+  const itemFrame = frame % LIVE_LOWER_THIRD_FRAMES;
+  const imageSource = resolveImageSource(activeUpload.image_url);
+
+  // EVALUATE UNIQUE RUN SELECTION HISTORIES 
+  if (activeUpload && activeUpload.id !== currentMessageIdRef.current) {
+    currentMessageIdRef.current = activeUpload.id;
+    if (!seenMessageIds.current.has(activeUpload.id)) {
+      seenMessageIds.current.add(activeUpload.id);
+      setIsFirstTime(true);
+    } else {
+      setIsFirstTime(false);
+    }
+  }
+
+  // CALCULATE SCREEN GRID TRANSLATIONS (From -1100 to 1100)
+  const translateX = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES], [-1100, 1100], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // EXACT SCREEN CENTER TRACKER: Triggers precisely at the midpoint of the card's lifecycle
+  const hasReachedCenter = translateX >= 0;
+  const shouldDisperse = isFirstTime && hasReachedCenter;
+
+  const translateY = linearInterpolate(itemFrame, [0, LIVE_LOWER_THIRD_FRAMES / 2, LIVE_LOWER_THIRD_FRAMES], [10, -10, 10], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = linearInterpolate(itemFrame, [0, 54, LIVE_LOWER_THIRD_FRAMES - 64, LIVE_LOWER_THIRD_FRAMES], [0, 1, 1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // Standard Spark Angle Array
+  const sparkAngles = [30, 60, 90, 120, 150, 210, 240, 270, 300, 330];
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(90deg, rgba(10,14,16,0.18), rgba(10,14,16,0.85) 18%, rgba(10,14,16,0.9) 50%, rgba(10,14,16,0.85) 82%, rgba(10,14,16,0.18))',
+        borderTop: '1px solid rgba(217,191,141,0.28)',
+        boxShadow: '0 -15px 50px rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(12px)',
+        overflow: 'visible',
+        pointerEvents: 'none',
+      }}
+    >
+      <style>{`
+        @keyframes sparkScatter {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) scale(0.1);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
+      <div
+        style={{
+          position: 'relative',
+          width: 'fit-content',
+          minWidth: '450px',    
+          maxWidth: '85vw',
+          minHeight: '110px',
+          opacity,
+          transform: `translate(${translateX}px, ${translateY}px)`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          padding: '16px 24px',
+          background: 'rgba(18,23,25,0.95)',
+          border: '1px solid rgba(217,191,141,0.42)',
+          boxShadow: '0 15px 35px rgba(0,0,0,0.4)',
+          borderRadius: '8px',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div
+          style={{
+            width: '75px',
+            height: '75px',
+            flex: '0 0 75px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: '6px',
+          }}
+        >
+          {imageSource ? (
+            <img src={imageSource} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />
+          ) : (
+            <div style={{ color: 'rgba(255,255,255,0.52)', fontFamily: 'Georgia, serif', fontSize: '24px' }}>+</div>
+          )}
+        </div>
+        
+        <div style={{ minWidth: 0, flex: 1, position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', position: 'relative', width: 'fit-content' }}>
+            <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '22px', lineHeight: 1.1, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {activeUpload.sender_name || 'Guest'}
+            </span>
+
+            {/* ANCHOR PLACEMENT MATRIX */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+              <svg
+                viewBox="0 0 24 24"
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  fill: '#d9bf8d',
+                  marginLeft: '12px',
+                  marginBottom: '2px',
+                  filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
+                  transition: 'opacity 0.15s ease-out',
+                  // Dissolves vector shapes to 0 instant execution center burst targets
+                  opacity: shouldDisperse ? 0 : 1, 
+                }}
+              >
+                <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
+              </svg>
+
+              {/* RENDER DYNAMIC EMISSION PARTICLES WHEN MIDPOINT CONTEXT TRIGGERS */}
+              {shouldDisperse && sparkAngles.map((angle, idx) => (
+                <CrossParticleSpark 
+                  key={`${activeUpload.id}-spark-${idx}`} 
+                  angle={angle} 
+                  delay={idx * 0.02} 
+                  distance={40 + Math.random() * 50} 
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '16px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {activeUpload.message_text || 'Shared a memory in loving tribute.'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const MemorialSlideshowController = ({
