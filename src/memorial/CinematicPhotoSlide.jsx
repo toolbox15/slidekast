@@ -21,26 +21,28 @@ export const CinematicPhotoSlide = ({
   const name = photo?.sender_name || "";
   const message = photo?.message_text || "";
   const caption = photo?.caption || "";
-  const radius = frameShape === "oval" ? "999px" : "28px";
+  const radius = frameShape === "oval" ? "50%" : "16px";
 
-  const imageScale = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [1, 1.06], {
+  // Pure mathematical pan and zoom factors driven by your controller frame loop
+  const imageScale = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [1.02, 1.12], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const imageY = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [10, -10], {
+  const imageY = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [0, -15], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const frameGlow = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [0.16, 0.28], {
+  const frameGlow = interpolate(frame, [0, PHOTO_SLIDE_FRAMES], [0.2, 0.4], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  
   const textFrame = Math.max(0, frame - TEXT_REVEAL_DELAY);
   const textOpacity = interpolate(textFrame, [0, TEXT_REVEAL_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const textY = interpolate(textFrame, [0, TEXT_REVEAL_FRAMES], [24, 0], {
+  const textY = interpolate(textFrame, [0, TEXT_REVEAL_FRAMES], [15, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -53,54 +55,50 @@ export const CinematicPhotoSlide = ({
         inset: 0,
         overflow: "hidden",
         opacity,
-        backgroundColor: "#101417",
+        backgroundColor: "#0d1113",
       }}
     >
-      {/* 1. Blurred Background Plate */}
+      {/* 1. Immersive Blurred Ambient Glow Plate */}
       {imgUrl ? (
         <img
           src={imgUrl}
           alt=""
           style={{
             position: "absolute",
-            inset: -50,
-            width: "calc(100% + 100px)",
-            height: "calc(100% + 100px)",
+            inset: -40,
+            width: "calc(100% + 80px)",
+            height: "calc(100% + 80px)",
             objectFit: "cover",
             objectPosition: "center",
-            filter: "blur(42px) brightness(0.36) saturate(0.92)",
-            transform: `scale(${1.08 + frameGlow * 0.08})`,
-            opacity: isEntering ? 1 : 0.94,
+            filter: "blur(60px) brightness(0.25) saturate(1.1)",
+            transform: `scale(1.1)`,
+            opacity: 0.85,
           }}
         />
       ) : null}
 
-      {/* 2. Main Photo Container (Strictly bounded leaving 160px at bottom for text) */}
+      {/* 2. Primary Hero Presentation Frame */}
       <div
         style={{
           position: "absolute",
-          inset: "40px 80px 160px",
+          // Safely locks the main picture inside the top 75% workspace, leaving room for text
+          inset: "4% 6% 160px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transform: `scale(${imageScale}) translateY(${imageY}px)`,
-          transformOrigin: "center center",
         }}
       >
-        {/* The Protective Gold Frame */}
         <div
           style={{
-            width: "100%",
+            position: "relative",
+            width: frameShape === "oval" ? "min(55vh, 100%)" : "100%",
             height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-            boxSizing: "border-box", // Forces padding to stay inside constraints
+            maxWidth: "1160px",
+            overflow: "hidden",
             borderRadius: radius,
-            border: "1px solid rgba(238,222,190,0.72)",
-            background: "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.045))",
-            boxShadow: `0 34px 96px rgba(0,0,0,0.52), 0 0 ${26 + frameGlow * 42}px rgba(217,191,141,0.18), inset 0 0 0 1px rgba(255,255,255,0.14)`,
+            border: "1px solid rgba(217,191,141,0.45)",
+            background: "rgba(16, 21, 23, 0.6)",
+            boxShadow: `0 30px 70px rgba(0,0,0,0.65), 0 0 ${30 + frameGlow * 30}px rgba(217,191,141,0.15)`,
           }}
         >
           {imgUrl ? (
@@ -110,10 +108,11 @@ export const CinematicPhotoSlide = ({
               style={{
                 width: "100%",
                 height: "100%",
-                objectFit: "contain", // Forces image to shrink to fit the box
-                borderRadius: frameShape === "oval" ? "999px" : "12px",
-                boxShadow: "0 18px 52px rgba(0,0,0,0.48)",
-                filter: "saturate(0.96) contrast(1.04)",
+                // Cover fills the golden container frame with premium presence
+                objectFit: frameShape === "oval" ? "cover" : "contain",
+                objectPosition: "center 35%",
+                transform: `scale(${imageScale}) translateY(${imageY}px)`,
+                filter: "contrast(1.02) saturate(0.98)",
               }}
             />
           ) : (
@@ -124,12 +123,14 @@ export const CinematicPhotoSlide = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: frameShape === "oval" ? "999px" : "12px",
-                background: "linear-gradient(135deg, rgba(82,98,104,0.62), rgba(28,34,38,0.88))",
-                color: "rgba(255,255,255,0.82)",
+                padding: "40px",
+                boxSizing: "border-box",
+                color: "rgba(255,255,255,0.85)",
                 fontFamily: "Georgia, serif",
-                fontSize: 48,
+                fontSize: "36px",
+                lineHeight: 1.3,
                 textAlign: "center",
+                fontStyle: "italic"
               }}
             >
               {caption}
@@ -138,24 +139,23 @@ export const CinematicPhotoSlide = ({
         </div>
       </div>
 
-      {/* 3. Text & Caption Zone (Safely parked at the bottom) */}
+      {/* 3. High-End Typography Overlay Zone */}
       <div
         style={{
           position: "absolute",
-          bottom: 30,
+          bottom: "35px",
           left: 0,
           width: "100%",
-          height: "120px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: "0 80px",
+          padding: "0 60px",
           boxSizing: "border-box",
           opacity: message ? 1 : textOpacity,
           transform: `translateY(${textY}px)`,
-          zIndex: 10,
+          zIndex: 20,
         }}
       >
         {message ? (
@@ -164,18 +164,19 @@ export const CinematicPhotoSlide = ({
             sender={name}
             frame={handwritingFrame}
           />
-        ) : (
+        ) : caption ? (
           <>
             <p
               style={{
                 fontFamily: "Georgia, serif",
-                fontSize: 42,
+                fontSize: "34px",
                 fontStyle: "italic",
                 color: "#f8fafc",
-                margin: "0 0 12px",
-                lineHeight: 1.32,
-                textShadow: "0 4px 12px rgba(0,0,0,0.9)",
-                maxWidth: 1200,
+                margin: "0 0 8px",
+                lineHeight: 1.3,
+                textShadow: "0 3px 10px rgba(0,0,0,0.95)",
+                maxWidth: "1000px",
+                fontWeight: "300"
               }}
             >
               {caption}
@@ -184,11 +185,11 @@ export const CinematicPhotoSlide = ({
               <h3
                 style={{
                   color: "#d9bf8d",
-                  fontSize: 22,
-                  letterSpacing: 4,
+                  fontSize: "16px",
+                  letterSpacing: "5px",
                   textTransform: "uppercase",
                   margin: 0,
-                  fontWeight: 400,
+                  fontWeight: "400",
                   textShadow: "0 2px 4px rgba(0,0,0,0.8)",
                 }}
               >
@@ -196,7 +197,7 @@ export const CinematicPhotoSlide = ({
               </h3>
             ) : null}
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );
