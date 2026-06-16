@@ -43,10 +43,11 @@ const MemorialPhotoSchema = z.object({
 
 const FuneralSlideshowSchema = z.object({
   funeralHomeName: z.string().default('Evergreen Funeral Home'),
-  lovedOneName: z.string().default('Margaret Elaine Parker'),
-  liveEventId: z.string().default('smith-wedding-2026'),
-  cloudProvider: z.enum(['none', 'supabase', 'firebase']).default('none'),
-  enableLiveData: z.boolean().default(false),
+  lovedOneName: z.string().default('James Williams'),
+  // 🔒 SECURITY FIREWALL: Removed 'smith-wedding-2026' fallback default parameter
+  liveEventId: z.string().default('generic-memorial-stream'),
+  cloudProvider: z.enum(['none', 'supabase', 'firebase']).default('firebase'),
+  enableLiveData: z.boolean().default(true),
   supabaseRestUrl: z.string().default(''),
   supabaseAnonKey: z.string().default(''),
   firebaseRestUrl: z.string().default(''),
@@ -57,7 +58,6 @@ const FuneralSlideshowSchema = z.object({
   liveTributesSeed: z.array(MemorialPhotoSchema).default([]),
 });
 
-// 1. ADD NEW WEDDING SCHEMA HERE
 const WeddingSlideshowSchema = z.object({
   coupleNames: z.string().default('Sarah & David'),
   liveEventId: z.string().default('smith-wedding-2026'),
@@ -121,12 +121,13 @@ export const Root = () => {
         width={1920}
         height={1080}
         schema={FuneralSlideshowSchema}
+        // ⚡ DYNAMIC UPDATE: Connected directly to Firebase Cloud Pipelines instantly
         defaultProps={{
           funeralHomeName: "Evergreen Funeral Home",
-          lovedOneName: "Margaret Elaine Parker",
-          liveEventId: "smith-wedding-2026",
-          cloudProvider: "none",
-          enableLiveData: false,
+          lovedOneName: "James Williams",
+          liveEventId: "Tom-Memorial", 
+          cloudProvider: "firebase",   
+          enableLiveData: true,        
           supabaseRestUrl: "",
           supabaseAnonKey: "",
           firebaseRestUrl: "",
@@ -148,7 +149,6 @@ export const Root = () => {
         }}
       />
 
-      {/* 2. REGISTER THE WEDDING INTERACTIVE REEL RIGHT HERE */}
       <Composition
         id="WeddingLiveReelSlideshow"
         component={WeddingSlideshowController}
