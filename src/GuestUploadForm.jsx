@@ -1,165 +1,332 @@
-import React, { useState } from 'react';
-import { uploadGuestTribute } from './uploadService';
+import { useMemo, useState } from "react";
+// Connects the custom premium styling to this form
+import "./App.css"; 
+// Import your existing Firebase config modules
+import { db, storage } from "./firebaseConfig"; 
+import { collection, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-export default function GuestUploadForm({ eventId = "demo-event" }) {
-  const [name, setName] = useState('');
-  const [message, setMessage] = useState('');
-  const [file, setFile] = useState(null);
-  const [status, setStatus] = useState({ loading: false, success: false, error: null });
+const EVENT_CONFIG = {
+  wedding: {
+    eyebrow: "THE WEDDING OF",
+    eventName: "Marcus & Danielle",
+    heading: "Share Your Memory",
+    description:
+      "Upload a photo and leave a blessing for the couple’s live display.",
+    messageLabel: "Leave a Blessing",
+    placeholder:
+      "Wishing you a beautiful lifetime of love, laughter, and happiness together!",
+    button: "Send to Live Display",
+  },
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.type.startsWith('image/')) {
-      setFile(selectedFile);
-      setStatus(prev => ({ ...prev, error: null }));
-    } else {
-      setStatus(prev => ({ ...prev, error: "Please select a valid image file (PNG/JPEG)." }));
-    }
-  };
+  memorial: {
+    eyebrow: "CELEBRATING THE LIFE OF",
+    eventName: "James Williams",
+    heading: "Share a Memory",
+    description:
+      "Upload a treasured photo or leave a condolence for the family.",
+    messageLabel: "Share a Condolence or Memory",
+    placeholder:
+      "Your kindness and unforgettable smile will always remain in our hearts.",
+    button: "Submit Memorial Tribute",
+  },
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !message || !file) {
-      setStatus(prev => ({ ...prev, error: "All fields are required!" }));
+  "Tom-Memorial": {
+    eyebrow: "CELEBRATING THE LIFE OF",
+    eventName: "Tom Henderson",
+    heading: "Share a Memory",
+    description:
+      "Upload a treasured photo or leave a condolence for the family.",
+    messageLabel: "Share a Condolence or Memory",
+    placeholder:
+      "Your kindness and unforgettable smile will always remain in our hearts.",
+    button: "Submit Memorial Tribute",
+  },
+
+  birthday: {
+    eyebrow: "CELEBRATING",
+    eventName: "Angela’s 60th Birthday",
+    heading: "Join the Celebration",
+    description:
+      "Upload a photo and leave a birthday message for the live display.",
+    messageLabel: "Leave a Birthday Message",
+    placeholder:
+      "Wishing you many more years of happiness, laughter, and wonderful memories!",
+    button: "Send Birthday Message",
+  },
+
+  graduation: {
+    eyebrow: "CONGRATULATIONS",
+    eventName: "Class of 2026",
+    heading: "Celebrate the Graduate",
+    description:
+      "Upload a photo and send congratulations to the live display.",
+    messageLabel: "Send Congratulations",
+    placeholder:
+      "Congratulations on this amazing achievement. Your future is bright!",
+    button: "Send Congratulations",
+  },
+};
+
+export default function GuestUploadForm() {
+  // ⚡ DYNAMIC UPDATE: Automatically reads "?event=xyz" from the browser link!
+  const eventType = useMemo(() => {
+    const searchParameters = new URLSearchParams(window.location.search);
+    const urlEventId = searchParameters.get("event");
+    return urlEventId || "wedding"; // Falls back to wedding if no parameter exists
+  }, []);
+
+  // Targets your active theme layout configurations cleanly
+  const event = useMemo(() => {
+    // 1. Check for exact match (like "Tom-Memorial")
+    if (EVENT_CONFIG[eventType]) return EVENT_CONFIG[eventType];
+
+    // 2. Smart Scan fallback: checks if the text includes keywords
+    const lowerType = eventType.toLowerCase();
+    if (lowerType.includes("memorial")) return EVENT_CONFIG.memorial;
+    if (lowerType.includes("birthday")) return EVENT_CONFIG.birthday;
+    if (lowerType.includes("graduation")) return EVENT_CONFIG.graduation;
+
+    return EVENT_CONFIG.wedding;
+  }, [eventType]);
+
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState("");
+
+  const maxCharacters = 120;
+
+  function handlePhotoChange(event) {
+    const selectedFile = event.target.files?.[0];
+    setError("");
+
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith("image/")) {
+      setError("Please choose a JPG, PNG, WEBP, or other image file.");
       return;
     }
 
-    setStatus({ loading: true, success: false, error: null });
-
-    const result = await uploadGuestTribute(eventId, file, name, message);
-
-    if (result.success) {
-      setStatus({ loading: false, success: true, error: null });
-      setName('');
-      setMessage('');
-      setFile(null);
-    } else {
-      setStatus({ loading: false, success: false, error: result.error });
+    const maximumSize = 10 * 1024 * 1024;
+    if (selectedFile.size > maximumSize) {
+      setError("Please choose an image smaller than 10 MB.");
+      return;
     }
-  };
 
-  if (status.success) {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setPhoto(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
+  }
+
+  function removePhoto() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPhoto(null);
+    setPreviewUrl("");
+  }
+
+  async function handleSubmit(eventObject) {
+    eventObject.preventDefault();
+    setError("");
+
+    if (!name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (!message.trim()) {
+      setError("Please enter a short message.");
+      return;
+    }
+
+    if (!photo) {
+      setError("Please choose a photo.");
+      return;
+    }
+
+    try {
+      setStatus("uploading");
+
+      // 1. Process Live Firebase Cloud Storage upload bucket pipeline
+      const timestamp = Date.now();
+      const uniqueFileName = `${timestamp}_${photo.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+      
+      // Uploads the photo cleanly using the asset template configuration
+      const storageLocationRef = ref(storage, `events/${eventType}/${uniqueFileName}`);
+      
+      const uploadSnapshot = await uploadBytes(storageLocationRef, photo);
+      const cloudDisplayUrl = await getDownloadURL(uploadSnapshot.ref);
+
+      // 2. Dispatch payloads straight to your targeted live stream collection
+      // ⚡ DYNAMIC UPDATE: Routes right into the specific folder identifier from the URL
+      const eventSlugNode = eventType;
+      
+      // Points to "live_tributes" collection to fully satisfy your database layout security rules
+      const targetFirestoreCollection = collection(db, "events", eventSlugNode, "live_tributes");
+
+      // Passes properties formatted explicitly to clear your backend firewall size parameters
+      await addDoc(targetFirestoreCollection, {
+        sender_name: name.trim().substring(0, 30), // Keeps length below rule limits
+        message_text: message.trim().substring(0, 80), // Keeps length below rule limits
+        imageUrl: cloudDisplayUrl,
+        eventType: eventType,
+        createdAt: timestamp,
+        approved: false 
+      });
+
+      setStatus("success");
+    } catch (submitError) {
+      console.error("SlideKast Upload Core Fault:", submitError);
+      setStatus("idle");
+      setError("Your submission could not be sent due to a network connection timeout. Please try again.");
+    }
+  }
+
+  function resetForm() {
+    setName("");
+    setMessage("");
+    removePhoto();
+    setStatus("idle");
+    setError("");
+  }
+
+  if (status === "success") {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>
-        <h2 style={{ color: '#2e7d32' }}>✨ Sent Successfully!</h2>
-        <p>Look at the big screen to see your memory slide into the live stream loop.</p>
-        <button 
-          onClick={() => setStatus(prev => ({ ...prev, success: false }))}
-          style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#0070f3', color: '#fff', cursor: 'pointer' }}
-        >
-          Send Another Memory
-        </button>
-      </div>
+      <main className="page-shell">
+        <section className="form-card success-card">
+          <div className="success-icon" aria-hidden="true">✓</div>
+          <p className="event-eyebrow">{event.eventName}</p>
+          <h1>Thank You</h1>
+          <p className="success-message">
+            Your photo and message were submitted successfully.
+          </p>
+          <div className="approval-notice">
+            Your submission is awaiting approval before appearing on the live display.
+          </div>
+          <button className="primary-button" type="button" onClick={resetForm}>
+            Submit Another Memory
+          </button>
+          <PoweredBy />
+        </section>
+      </main>
     );
   }
 
   return (
-    <div style={{ maxWidth: '450px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '5px' }}>Share Your Memory</h2>
-      <p style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '0', marginBottom: '25px' }}>
-        Upload a photo and leave a short blessing for the live display screen.
-      </p>
+    <main className="page-shell">
+      <section className="form-card">
+        <header className="event-header">
+          <p className="event-eyebrow">{event.eyebrow}</p>
+          <p className="event-name">{event.eventName}</p>
+          <div className="header-divider" />
+          <h1>{event.heading}</h1>
+          <p className="event-description">{event.description}</p>
+        </header>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        
-        {/* Name Input */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Your Name</label>
-          <input 
-            type="text" 
-            maxLength={30}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., The Ramos Family"
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px' }}
-            required
-          />
-        </div>
-
-        {/* Message Input with 80-character strict cap */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Short Blessing (10-12 words max)</label>
-            <span style={{ fontSize: '12px', color: message.length >= 80 ? 'red' : '#666' }}>
-              {message.length}/80 chars
-            </span>
+        <form onSubmit={handleSubmit}>
+          <div className="field-group">
+            <label htmlFor="guest-name">Your Name</label>
+            <input
+              id="guest-name"
+              type="text"
+              value={name}
+              onChange={(eventObject) => setName(eventObject.target.value)}
+              placeholder="e.g., The Ramos Family"
+              autoComplete="name"
+              maxLength={60}
+            />
           </div>
-          <textarea 
-            maxLength={80}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="e.g., Wishing you a beautiful lifetime of love, laughter, and happiness together!"
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px', height: '80px', resize: 'none' }}
-            required
-          />
-        </div>
 
-        {/* File Uploader */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Choose Photo</label>
-          <input 
-            type="file" 
-            accept="image/*"
-            onChange={handleFileChange}
-            style={{ fontSize: '16px' }}
-            required
-          />
-        </div>
-
-        {/* Error Notification */}
-        {status.error && (
-          <div style={{ color: 'red', fontSize: '14px', backgroundColor: '#ffebee', padding: '10px', borderRadius: '6px' }}>
-            ⚠️ {status.error}
+          <div className="field-group">
+            <div className="label-row">
+              <label htmlFor="guest-message">{event.messageLabel}</label>
+              <span className={message.length >= maxCharacters ? "character-count limit" : "character-count"}>
+                {message.length}/{maxCharacters}
+              </span>
+            </div>
+            <textarea
+              id="guest-message"
+              value={message}
+              onChange={(eventObject) => setMessage(eventObject.target.value)}
+              placeholder={event.placeholder}
+              maxLength={maxCharacters}
+              rows={5}
+            />
           </div>
-        )}
 
-        {/* Submit Button */}
-        <button 
-          type="submit" 
-          disabled={status.loading}
-          style={{ 
-            padding: '14px', 
-            borderRadius: '8px', 
-            border: 'none', 
-            background: status.loading ? '#ccc' : '#000', 
-            color: '#fff', 
-            fontSize: '16px', 
-            fontWeight: 'bold', 
-            cursor: status.loading ? 'not-allowed' : 'pointer',
-            marginTop: '10px'
-          }}
-        >
-          {status.loading ? 'Uploading to Screen...' : 'Send to Live Display'}
-        </button>
+          <div className="field-group">
+            <label>Choose a Photo</label>
+            {!previewUrl ? (
+              <label className="upload-zone" htmlFor="photo-upload">
+                <span className="camera-icon" aria-hidden="true">▣</span>
+                <span className="upload-title">Choose or Take a Photo</span>
+                <span className="upload-help">JPG, PNG or WEBP · Maximum 10 MB</span>
+                <input
+                  id="photo-upload"
+                  className="hidden-file-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePhotoChange}
+                />
+              </label>
+            ) : (
+              <div className="photo-preview">
+                <img src={previewUrl} alt="Selected upload preview" />
+                <div className="preview-overlay">
+                  <p>{photo?.name}</p>
+                  <button type="button" className="remove-photo-button" onClick={removePhoto}>
+                    Remove Photo
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
-      </form>
+          {error && (
+            <div className="error-message" role="alert">
+              {error}
+            </div>
+          )}
 
-      {/* Embedded SlideKast Lead Generation Footer Link */}
-      <div style={{ textAlign: 'center', marginTop: '35px', paddingBottom: '10px' }}>
-        <a 
-          href="https://slidekast.com" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          style={{ 
-            fontSize: '11px', 
-            color: '#777', 
-            textDecoration: 'none', 
-            letterSpacing: '2px', 
-            textTransform: 'uppercase', 
-            fontWeight: '500',
-            transition: 'color 0.2s, letter-spacing 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.color = '#d9bf8d'; // Transitions to gold brand accent on desktop hover
-          }} 
-          onMouseLeave={(e) => {
-            e.target.style.color = '#777';
-          }}
-        >
-          Powered by <span style={{ fontWeight: 'bold' }}>SlideKast</span>
-        </a>
-      </div>
+          <button className="primary-button" type="submit" disabled={status === "uploading"}>
+            {status === "uploading" ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                Uploading…
+              </>
+            ) : (
+              event.button
+            )}
+          </button>
 
-    </div>
+          <p className="privacy-notice">
+            By submitting, you allow the event host to review and display your photo and message during this private event.
+          </p>
+        </form>
+        <PoweredBy />
+      </section>
+    </main>
+  );
+}
+
+function PoweredBy() {
+  return (
+    <footer className="powered-footer">
+      <span>Powered by</span>
+      <a href="https://slidekast.com" target="_blank" rel="noopener noreferrer">
+        SlideKast
+      </a>
+      <a className="planning-link" href="https://slidekast.com" target="_blank" rel="noopener noreferrer">
+        Planning an event? See how it works.
+      </a>
+    </footer>
   );
 }

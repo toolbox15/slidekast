@@ -3,6 +3,8 @@ import { Composition } from 'remotion';
 import { Menu } from './Menu';
 // @ts-expect-error FuneralSlideshow is authored as JSX in this project.
 import { FuneralSlideshow } from './FuneralSlideshow';
+// @ts-expect-error WeddingSlideshowController is authored as JSX in this project.
+import { WeddingSlideshowController } from './wedding/WeddingSlideshowController';
 import { z } from 'zod';
 
 const SignageSchema = z.object({
@@ -55,134 +57,113 @@ const FuneralSlideshowSchema = z.object({
   liveTributesSeed: z.array(MemorialPhotoSchema).default([]),
 });
 
+// 1. ADD NEW WEDDING SCHEMA HERE
+const WeddingSlideshowSchema = z.object({
+  coupleNames: z.string().default('Sarah & David'),
+  liveEventId: z.string().default('smith-wedding-2026'),
+  enableLiveData: z.boolean().default(true),
+  firebaseRestUrl: z.string().default(''),
+});
 
 export const Root = () => {
   return (
     <>
-    <Composition
-      id="TonysBarMenu"
-      component={Menu}
-      durationInFrames={150}
-      fps={30}
-      width={1920}
-      height={1080}
-      schema={SignageSchema}
-      defaultProps={{
-        isLocked: false,
-        headerText: "TONY'S BAR",
-        headerSubtext: "EATS & DRINKS",
-        headerTop: 82,
-        headerLeft: 460,
-        headerWidth: 600,
-        headerScale: 1,
-        imageTop: 56,
-        imageLeft: 1238,
-        imageWidth: 633,
-        imageHeight: 421,
-        foodHeading: "EATS",
-        foodTop: 366,
-        foodLeft: 92,
-        foodWidth: 600,
-        foodSize: 41,
-        cocktailsHeading: "DRINKS",
-        cocktailsTop: 546,
-        cocktailsLeft: 1278,
-        cocktailsWidth: 509,
-        cocktailsSize: 20,
-        cocktailItems: [
-          {
-            name: "MULE",
-            price: "$10",
-            desc: "Tito's or Jameson, ginger beer, lime",
-          },
-          {
-            name: "PEACH LEMONADE",
-            price: "$5",
-            desc: "Tito's or Crown Royal Peach, lemonade",
-          },
-          {
-            name: "THE COLADA",
-            price: "$10",
-            desc: "Pineapple vodka, coco real, juice",
-          },
-          {
-            name: "LAVENDER MARTINI",
-            price: "$12",
-            desc: "Tito's vodka, syrup, fresh lavender",
-          },
-        ],
-        foodItems: [
-          { name: "STUFFED JALAPEÑOS", price: "$10" },
-          { name: "BAR SLIDERS", price: "$12" },
-          { name: "LOADED FRIES", price: "$10" },
-          { name: "BUFFALO CAULIFLOWER", price: "$13" },
-        ],
-      }}
-    />
-    <Composition
-      id="FuneralHomeSlideshow"
-      component={FuneralSlideshow}
-      durationInFrames={3600}
-      fps={30}
-      width={1920}
-      height={1080}
-      schema={FuneralSlideshowSchema}
-      defaultProps={{
-        funeralHomeName: "Evergreen Funeral Home",
-        lovedOneName: "Margaret Elaine Parker",
-        liveEventId: "smith-wedding-2026",
-        cloudProvider: "none",
-        enableLiveData: false,
-        supabaseRestUrl: "",
-        supabaseAnonKey: "",
-        firebaseRestUrl: "",
-        pollIntervalMs: 7000,
-        earlyYearsPhotos: [
-          {
-            image_url: "",
-            caption: "Baby picture or childhood portrait",
-            sender_name: "",
-            message_text: "",
-          },
-          {
-            image_url: "",
-            caption: "School days and early family memories",
-            sender_name: "",
-            message_text: "",
-          },
-        ],
-        familyPhotos: [
-          {
-            image_url: "",
-            caption: "Marriage, children, and milestones",
-            sender_name: "",
-            message_text: "",
-          },
-          {
-            image_url: "",
-            caption: "Holiday gatherings and family traditions",
-            sender_name: "",
-            message_text: "",
-          },
-        ],
-        legacyPhotos: [
-          {
-            image_url: "",
-            caption: "Grandchildren, friends, and community impact",
-            sender_name: "",
-            message_text: "",
-          },
-        ],
-        liveTributesSeed: [
-          {
-            image_url: "",
-            caption: "Awaiting live guest tribute",
-            sender_name: "Guestbook",
-            message_text: "Your memories will appear here.",
-          },
-        ],
-      }}
-    />
+      <Composition
+        id="TonysBarMenu"
+        component={Menu}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        schema={SignageSchema}
+        defaultProps={{
+          isLocked: false,
+          headerText: "TONY'S BAR",
+          headerSubtext: "EATS & DRINKS",
+          headerTop: 82,
+          headerLeft: 460,
+          headerWidth: 600,
+          headerScale: 1,
+          imageTop: 56,
+          imageLeft: 1238,
+          imageWidth: 633,
+          imageHeight: 421,
+          foodHeading: "EATS",
+          foodTop: 366,
+          foodLeft: 92,
+          foodWidth: 600,
+          foodSize: 41,
+          cocktailsHeading: "DRINKS",
+          cocktailsTop: 546,
+          cocktailsLeft: 1278,
+          cocktailsWidth: 509,
+          cocktailsSize: 20,
+          cocktailItems: [
+            { name: "MULE", price: "$10", desc: "Tito's or Jameson, ginger beer, lime" },
+            { name: "PEACH LEMONADE", price: "$5", desc: "Tito's or Crown Royal Peach, lemonade" },
+            { name: "THE COLADA", price: "$10", desc: "Pineapple vodka, coco real, juice" },
+            { name: "LAVENDER MARTINI", price: "$12", desc: "Tito's vodka, syrup, fresh lavender" },
+          ],
+          foodItems: [
+            { name: "STUFFED JALAPEÑOS", price: "$10" },
+            { name: "BAR SLIDERS", price: "$12" },
+            { name: "LOADED FRIES", price: "$10" },
+            { name: "BUFFALO CAULIFLOWER", price: "$13" },
+          ],
+        }}
+      />
+
+      <Composition
+        id="FuneralHomeSlideshow"
+        component={FuneralSlideshow}
+        durationInFrames={3600}
+        fps={30}
+        width={1920}
+        height={1080}
+        schema={FuneralSlideshowSchema}
+        defaultProps={{
+          funeralHomeName: "Evergreen Funeral Home",
+          lovedOneName: "Margaret Elaine Parker",
+          liveEventId: "smith-wedding-2026",
+          cloudProvider: "none",
+          enableLiveData: false,
+          supabaseRestUrl: "",
+          supabaseAnonKey: "",
+          firebaseRestUrl: "",
+          pollIntervalMs: 7000,
+          earlyYearsPhotos: [
+            { image_url: "", caption: "Baby picture or childhood portrait", sender_name: "", message_text: "" },
+            { image_url: "", caption: "School days and early family memories", sender_name: "", message_text: "" },
+          ],
+          familyPhotos: [
+            { image_url: "", caption: "Marriage, children, and milestones", sender_name: "", message_text: "" },
+            { image_url: "", caption: "Holiday gatherings and family traditions", sender_name: "", message_text: "" },
+          ],
+          legacyPhotos: [
+            { image_url: "", caption: "Grandchildren, friends, and community impact", sender_name: "", message_text: "" },
+          ],
+          liveTributesSeed: [
+            { image_url: "", caption: "Awaiting live guest tribute", sender_name: "Guestbook", message_text: "Your memories will appear here." },
+          ],
+        }}
+      />
+
+      {/* 2. REGISTER THE WEDDING INTERACTIVE REEL RIGHT HERE */}
+      <Composition
+        id="WeddingLiveReelSlideshow"
+        component={WeddingSlideshowController}
+        durationInFrames={3600}
+        fps={30}
+        width={1920}
+        height={1080}
+        schema={WeddingSlideshowSchema}
+        defaultProps={{
+          coupleNames: "Sarah & David",
+          liveEventId: "smith-wedding-2026",
+          enableLiveData: true,
+          firebaseRestUrl: "",
+        }}
+      />
     </>
   );
 };
