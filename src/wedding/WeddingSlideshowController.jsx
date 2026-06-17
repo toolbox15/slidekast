@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { getInputProps, useCurrentFrame, staticFile } from 'remotion';
+import { useCurrentFrame, staticFile } from 'remotion';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 import { interpolate, spring, useVideoConfig } from 'remotion';
@@ -13,7 +13,6 @@ const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
   const frame = useCurrentFrame();
   const videoRef = useRef(null);
 
-  // Auto-play insurance guard for stubborn browsers
   useEffect(() => {
     if (item.type === 'welcome' && videoRef.current) {
       videoRef.current.play().catch(err => {
@@ -22,7 +21,6 @@ const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
     }
   }, [item.type]);
 
-  // Handle Welcome Interstitial Video Rendering State
   if (item.type === 'welcome') {
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
@@ -33,13 +31,12 @@ const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
         style={{ 
           position: 'absolute',
           inset: 0,
-          backgroundColor: '#0c0f12', // Matches your exact luxury theme color if asset pauses
+          backgroundColor: '#0c0f12', 
           overflow: 'hidden',
           opacity: opacity,
           zIndex: 10
         }}
       >
-        {/* Full-bleed Video utilizing standard public folder routing and secure layout flags */}
         <video
           ref={videoRef}
           src="/Wedding1/welcome-bg.mp4"
@@ -82,7 +79,7 @@ const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
           />
         </div>
 
-        {/* Right Area: Gold Text Instructions Container Layout */}
+        {/* Right Area: Gold Text Instructions */}
         <div 
           style={{
             position: 'absolute',
@@ -118,7 +115,6 @@ const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
     );
   }
 
-  // --- STANDARD GUEST PHOTO RENDER BLOCK ---
   const messageText = item.photo?.message_text || item.photo?.message || 'Cheers to the beautiful couple!';
   const senderName = item.photo?.sender_name || item.photo?.sender || 'Wedding Guest';
   const imgUrl = item.photo?.imageUrl || item.photo?.image_url || '';
@@ -183,19 +179,26 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
-  const remotionProps = getInputProps();
   const currentFrame = useCurrentFrame();
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [dbStatus, setDbStatus] = useState('Initializing pipeline...');
   const previousDataHashRef = useRef('');
 
-  // Use the passed React prop layout first, fallback safely if empty
+  // 🛡️ CRASH GUARD: Dynamic import check fallback for safe browser context execution
   const liveEventId = useMemo(() => {
     if (passedEventId) return passedEventId;
-    if (remotionProps && remotionProps.liveEventId) return remotionProps.liveEventId;
+    
+    try {
+      // Lazy-load the Remotion input configuration package context wrapper
+      const remotionProps = require('remotion').getInputProps();
+      if (remotionProps && remotionProps.liveEventId) return remotionProps.liveEventId;
+    } catch (e) {
+      // Fail silently if running on Vercel production hosting environments
+    }
+
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
     return pathSegments[0] || 'smith-wedding-2026';
-  }, [remotionProps, passedEventId]);
+  }, [passedEventId]);
 
   useEffect(() => {
     setDbStatus(`Connecting path: events/${liveEventId}/receptionStream...`);
@@ -209,7 +212,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       if (snapshot.empty) {
         setDbStatus(`Connected! Stream active but channel folder is completely empty.`);
       } else {
-        setDbStatus(`Connected! Active document pool found with ${snapshot.size} entries.`);
+        setDbStatus(`Connected! Active data pool found with ${snapshot.size} entries.`);
       }
 
       snapshot.forEach((doc) => {
@@ -238,7 +241,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
-      {/* Visual Diagnostic Tracker - Set above the maps array layer to ensure rendering availability */}
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)', letterSpacing: '0.5px' }}>
         ⚙️ SYSTEM CORE TRACE: {dbStatus}
       </div>
