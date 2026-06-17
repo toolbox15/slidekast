@@ -38,6 +38,13 @@ const MainApp = () => {
 
   // 3. Real-Time Security Guard Check & Data Fetch
   useEffect(() => {
+    // 🧹 STATE RESET FIX: Clear old photos instantly whenever the eventId changes
+    setEventPhotos({
+      earlyYearsPhotos: [],
+      familyPhotos: [],
+      legacyPhotos: []
+    });
+
     if (eventId === 'default-event') {
       setEventStatus({ loading: false, active: true, error: false });
       return;
