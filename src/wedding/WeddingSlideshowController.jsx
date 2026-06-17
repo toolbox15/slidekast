@@ -47,15 +47,15 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container - Realigned to 30.8% Left to sit exactly inside the gold rectangle frame */}
+        {/* QR Code Container - Precision Aligned */}
         <div 
           style={{ 
             position: 'absolute', 
-            left: '30.8%',  // 👈 Shipped back left to match the frame center
+            left: '30.8%', 
             top: '55.5%', 
             transform: 'translate(-50%, -50%)', 
             zIndex: 5, 
-            width: '340px',  // 👈 Adjusted scale to perfectly fit inside the inner borders
+            width: '340px', 
             height: '340px', 
             display: 'flex', 
             alignItems: 'center', 
@@ -139,6 +139,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   useEffect(() => {
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
+    
+    // 🛠️ BYPASS MODERATION: Pull down ALL collection docs dynamically without filtering out status fields
     const q = query(targetCollectionRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -147,7 +149,9 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
+        // Snag both camelCase and snake_case urls regardless of moderation properties
         if (!data.imageUrl && !data.image_url) return;
+        
         updatedPhotos.push({ id: doc.id, photo: data });
         incomingDataString += `${doc.id}-${data.image_url || data.imageUrl || ''};`;
       });
@@ -157,7 +161,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
       }
     }, (error) => {
-      console.error("Firestore sync tracking offline", error);
+      console.error("Firestore sync offline", error);
     });
 
     return () => unsubscribe();
