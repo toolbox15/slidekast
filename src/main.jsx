@@ -10,8 +10,21 @@ const MainApp = () => {
   // 1. Parse the URL path to extract the dynamic Event ID and view page
   const pathSegments = window.location.pathname.split('/').filter(Boolean);
   const eventId = pathSegments[0] || 'default-event';
-  const isDisplayPage = pathSegments[1] === 'display';
-  const isAdminPage = pathSegments[1] === 'admin';
+
+  // ⚡ SAFETY CHECK FALLBACK: Read URL search query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const viewParam = urlParams.get('view');
+  const compositionParam = urlParams.get('composition');
+
+  // 📡 ROUTING SWITCH: True if path has /display OR if url contains backup parameter flags
+  const isDisplayPage = 
+    pathSegments[1] === 'display' || 
+    viewParam === 'display' || 
+    compositionParam === 'FuneralHomeSlideshow';
+
+  const isAdminPage = 
+    pathSegments[1] === 'admin' || 
+    viewParam === 'admin';
 
   // 2. Set initial authorization and photo state
   const [eventStatus, setEventStatus] = useState({ loading: true, active: true, error: false });
