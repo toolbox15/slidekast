@@ -36,28 +36,30 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Size the canvas to match its exact parent container width/height
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
 
     let particles = [];
     const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d', '#ffb3c1'];
 
-    // 🎯 COORDINATES LOCKED: Spawns exactly behind the Name text in the 35% Sidebar column
-    const originX = window.innerWidth * 0.825; 
-    const originY = window.innerHeight * 0.30; 
+    // 🎯 LOCALIZED COORDS: Centers the burst exactly where the name element is positioned inside the sidebar
+    const originX = canvas.width / 2;
+    const originY = canvas.height * 0.28; 
 
-    // Generate 40 dispersing heart particles
-    for (let i = 0; i < 40; i++) {
+    // Generate 45 dispersing heart particles
+    for (let i = 0; i < 45; i++) {
       particles.push({
-        x: originX + (Math.random() - 0.5) * 40, // Small localized cluster behind name
+        x: originX + (Math.random() - 0.5) * 60,
         y: originY,
-        size: Math.random() * 12 + 8, // Sleek, lightweight sizes
-        speedX: (Math.random() - 0.5) * 5, // Disperses outward to left and right
-        speedY: -Math.random() * 4 - 2, // Floats steadily upwards
+        size: Math.random() * 14 + 8,
+        speedX: (Math.random() - 0.5) * 6, // Spreads out horizontally
+        speedY: -Math.random() * 5 - 3,    // Rushes upward
         color: colors[Math.floor(Math.random() * colors.length)],
         opacity: 1,
         rotation: Math.random() * Math.PI,
-        rotationSpeed: (Math.random() - 0.5) * 0.04
+        rotationSpeed: (Math.random() - 0.5) * 0.05
       });
     }
 
@@ -86,7 +88,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
         alive = true;
         p.x += p.speedX;
         p.y += p.speedY;
-        p.opacity -= 0.012; // Beautiful, snappy evaporation arc
+        p.opacity -= 0.012; // Smooth fade-out timing
         p.rotation += p.rotationSpeed;
 
         ctx.save();
@@ -101,6 +103,8 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 
       if (alive) {
         animationId = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
 
@@ -108,14 +112,26 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     return () => cancelAnimationFrame(animationId);
   }, [triggerToggle]);
 
-  // Note: zIndex 4 puts the canvas overlay behind the sidebar text layers but on top of backgrounds
-  return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 4 }} />;
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        width: '100%', 
+        height: '100%', 
+        pointerEvents: 'none', 
+        zIndex: 2, // Sits safely above background layout, but beneath typography text
+        backgroundColor: 'transparent'
+      }} 
+    />
+  );
 };
 
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId }) => {
+const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   const videoRef = useRef(null);
   const [typedMessage, setTypedMessage] = useState('');
 
@@ -219,19 +235,22 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
         </div>
       </div>
 
-      {/* Right Sidebar Text Segment - Kept at high zIndex so hearts drift from beneath it */}
-      <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
-        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
+      {/* Right Sidebar Column Container */}
+      <div style={{ position: 'relative', width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
+        
+        {/* 💥 THE LAYER CONTEXT FIX: The Particle Canvas is nested right here inside the sidebar hierarchy */}
+        <HeartBurstCanvas triggerToggle={burstTrigger} />
+
+        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', zIndex: 3 }}>
           <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
         </div>
         
-        {/* 💫 NAME LAYER: Explicit stack positioning handles the background origin burst cleanly */}
-        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 6 }}>
+        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 3 }}>
           {senderName}
         </span>
         
-        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 6 }}>
+        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 3 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
       </div>
@@ -285,6 +304,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
+        // 🔥 VALIDATE SUBMISSION TRACK: Only fire the burst trigger if a brand-new live upload drops
         if (!isInitialLoadRef.current && updatedPhotos.length > liveGuestUploads.length) {
           setBurstTrigger((prev) => prev + 1);
         }
@@ -343,13 +363,12 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000', zIndex: 999 }}>
-      <HeartBurstCanvas triggerToggle={burstTrigger} />
-      
       {activeItem && (
         <WeddingPhotoPlayer 
           key={activeItem.id} 
           item={activeItem} 
           liveEventId={liveEventId}
+          burstTrigger={burstTrigger} // Pass the trigger down specifically to the renderer
         />
       )}
     </div>
