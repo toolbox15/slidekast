@@ -11,14 +11,14 @@ export function FuneralSlideshow({
 }) {
   const [liveUploadedPhotos, setLiveUploadedPhotos] = useState([]);
 
-  // 📡 EXPRESS LANE FILTER: Unlocks receptionStream for your target event IDs
+  // 📡 EXPRESS LANE FILTER
   const isInstantStream = useMemo(() => {
     return liveEventId === "smith-wedding-2026" || 
            liveEventId === "Tom-Memorial" || 
            (liveEventId && liveEventId.toLowerCase().includes("stream"));
   }, [liveEventId]);
 
-  // Listen for live guest uploads in the background
+  // Listen for live guest uploads
   useEffect(() => {
     const shouldRunLive = enableLiveData || liveEventId === "smith-wedding-2026" || liveEventId === "Tom-Memorial";
     if (!shouldRunLive || !liveEventId) return;
@@ -34,20 +34,20 @@ export function FuneralSlideshow({
       const liveData = snapshot.docs.map((doc) => ({
         id: doc.id,
         imageUrl: doc.data().imageUrl || doc.data().image_url,
-        sender_name: doc.data().sender_name || "Guest",
-        message_text: doc.data().message_text || doc.data().message,
+        sender_name: doc.data().sender_name || doc.data().sender || "",
+        message_text: doc.data().message_text || doc.data().message || "",
         createdAt: doc.data().createdAt || Date.now()
       }));
       
       setLiveUploadedPhotos(liveData.sort((a, b) => b.createdAt - a.createdAt));
     }, (error) => {
-      console.error("Firestore live loop stream failure:", error);
+      console.error("Firestore live stream failure:", error);
     });
 
     return () => unsubscribe();
   }, [liveEventId, enableLiveData, isInstantStream]);
 
-  // 🎯 THE MASTER DECK: Combines your pre-loaded arrays with the new live guest uploads
+  // 🎯 THE MASTER DECK: Merges live updates and pre-loaded folders seamlessly
   const allSlides = useMemo(() => {
     const formattedOriginals = [
       ...earlyYearsPhotos.map((url, i) => ({ id: `early-${i}`, imageUrl: url, sender_name: "", message_text: "" })),
@@ -58,7 +58,7 @@ export function FuneralSlideshow({
     return [...liveUploadedPhotos, ...formattedOriginals];
   }, [earlyYearsPhotos, familyPhotos, legacyPhotos, liveUploadedPhotos]);
 
-  // 🔄 AUTOMATED SLIDESHOW LOOP TIMER
+  // 🔄 LOOP TIMER
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -75,8 +75,8 @@ export function FuneralSlideshow({
 
   if (allSlides.length === 0) {
     return (
-      <div style={{ background: '#101417', color: '#d9bf8d', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', textAlign: 'center' }}>
-        <h1 style={{ color: '#f8fafc', fontSize: '28px', fontWeight: '400' }}>Loading Presentation Deck...</h1>
+      <div style={{ background: '#101417', color: '#d9bf8d', height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif' }}>
+        <h1 style={{ color: '#f8fafc', fontSize: '28px', fontWeight: '400' }}>Loading Presentation...</h1>
       </div>
     );
   }
@@ -84,22 +84,22 @@ export function FuneralSlideshow({
   return (
     <main style={{ height: '100vh', width: '100vw', background: '#090d0f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', padding: '40px 0 20px 0', boxSizing: 'border-box' }}>
       
-      {/* 📺 CENTRALLY ALIGNED MAIN VISUAL COMPOSITION ZONE */}
+      {/* 📺 PHOTO DISPLAY BOX */}
       <div style={{ flex: 1, width: '100%', maxWidth: '1400px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 40px' }}>
         <div style={{ height: '100%', maxHeight: '72vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(217, 191, 141, 0.25)', borderRadius: '6px', background: '#101417', boxShadow: '0 30px 70px rgba(0,0,0,0.8)', overflow: 'hidden' }}>
           <img 
-            src={currentSlide.imageUrl} 
-            alt="Presentation Content Frame" 
+            src={currentSlide?.imageUrl} 
+            alt="Slideshow Frame" 
             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
           />
         </div>
       </div>
 
-      {/* 💬 PREMIUM LOWER BANNER ZONE FOR GUEST MESSAGING AND CONDOLENCES */}
-      <footer style={{ width: '100%', maxWidth: '1200px', background: 'linear-gradient(180deg, rgba(24,35,37,0) 0%, rgba(16,20,23,0.95) 100%)', padding: '30px 40px 10px 40px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
-        {currentSlide.message_text ? (
+      {/* 💬 BOTTOM GUEST MESSAGING BLOCK */}
+      <footer style={{ width: '100%', maxWidth: '1200px', padding: '20px 40px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center', minHeight: '120px', justifyContent: 'center' }}>
+        {currentSlide?.message_text ? (
           <>
-            <blockquote style={{ color: '#f8fafc', fontSize: '26px', fontFamily: 'Georgia, serif', lineHeight: '1.4', fontStyle: 'italic', margin: 0, maxWidth: '900px', letterSpacing: '-0.3px' }}>
+            <blockquote style={{ color: '#f8fafc', fontSize: '28px', fontFamily: 'Georgia, serif', lineHeight: '1.4', fontStyle: 'italic', margin: 0, maxWidth: '950px' }}>
               "{currentSlide.message_text}"
             </blockquote>
             <cite style={{ color: '#d9bf8d', fontSize: '18px', fontWeight: 'bold', fontStyle: 'normal', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>
@@ -107,7 +107,7 @@ export function FuneralSlideshow({
             </cite>
           </>
         ) : (
-          <h2 style={{ color: '#f8fafc', fontSize: '28px', fontFamily: 'Georgia, serif', fontWeight: '400', letterSpacing: '1px', margin: 0 }}>
+          <h2 style={{ color: '#f8fafc', fontSize: '32px', fontFamily: 'Georgia, serif', fontWeight: '400', letterSpacing: '1px', margin: 0 }}>
             {liveEventId === "smith-wedding-2026" ? "Marcus & Danielle" : "Tom Henderson"}
           </h2>
         )}
