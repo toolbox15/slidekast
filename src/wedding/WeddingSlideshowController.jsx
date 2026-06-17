@@ -4,7 +4,7 @@ import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore'
 import { buildSmartWeddingTimeline } from './weddingUtils';
 
 // ==========================================
-// 1. UNIFIED WEDDING DISPLAY PLAYER (BROWSER SAFE)
+// 1. UNIFIED WEDDING DISPLAY PLAYER (PURE BROWSER)
 // ==========================================
 const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   const videoRef = useRef(null);
@@ -14,7 +14,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   const senderName = item.photo?.sender_name || item.photo?.sender || 'Wedding Guest';
   const imgUrl = item.photo?.imageUrl || item.photo?.image_url || '';
 
-  // Typewriter effect handler
   useEffect(() => {
     if (item.type !== 'photo') return;
     let charIndex = 0;
@@ -27,12 +26,11 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
       } else {
         clearInterval(typerInterval);
       }
-    }, 40); // Standard clean typing speed
+    }, 40);
 
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
-  // Welcome Screen view render block
   if (item.type === 'welcome') {
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
@@ -68,21 +66,18 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
     );
   }
 
-  // Standard Photo view render block
   if (!imgUrl) return null;
 
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       
-      {/* Photo Frame Container */}
       <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
           <img src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
       </div>
 
-      {/* Sidebar Text Area */}
       <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
@@ -96,7 +91,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 };
 
 // ==========================================
-// 2. TIMELINE LOOP & DATABASE SYNC ENGINE
+// 2. DATABASE SYNC ENGINE
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCMQA0SGLYMq2lf0zSr8NQA_JrNDBFSAmk",
@@ -159,13 +154,12 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return buildSmartWeddingTimeline(liveGuestUploads);
   }, [liveGuestUploads]);
 
-  // Native interval ticker loops slides completely fine in raw browser viewports
   useEffect(() => {
     if (!timeline.items || timeline.items.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timeline.items.length);
-    }, 6000); // Transitions automatically every 6 seconds
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [timeline.items]);
