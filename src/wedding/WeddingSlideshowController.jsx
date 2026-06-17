@@ -3,6 +3,27 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 
 // ==========================================
+// CINEMATIC STYLES (Ken Burns + Crossfade)
+// ==========================================
+const slideshowStyles = `
+  @keyframes kenburns {
+    0% { transform: scale(1.0) translate(0px, 0px); }
+    50% { transform: scale(1.08) translate(-10px, -5px); }
+    100% { transform: scale(1.0) translate(0px, 0px); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-kenburns {
+    animation: kenburns 24s ease-in-out infinite;
+  }
+  .animate-fade {
+    animation: fadeIn 1.2s ease-in-out forwards;
+  }
+`;
+
+// ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
 // ==========================================
 const WeddingPhotoPlayer = ({ item, liveEventId }) => {
@@ -38,7 +59,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
+      <div className="animate-fade" style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
+        <style>{slideshowStyles}</style>
         <video
           ref={videoRef}
           src="/Wedding1/welcome-bg.mp4"
@@ -88,24 +110,32 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   if (!imgUrl) return null;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'visible', zIndex: 999 }}>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
+    <div className="animate-fade" style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'hidden', zIndex: 999 }}>
+      <style>{slideshowStyles}</style>
       
+      {/* Slow Moving Blurred Background Panel */}
+      <div 
+        className="animate-kenburns"
+        style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} 
+      />
+      
+      {/* Left Photo Stage Area */}
       <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
+          {/* 🎬 Image with Continuous Smooth Ken Burns Motion inside the Frame */}
           <img 
+            className="animate-kenburns"
             src={imgUrl} 
             alt="Live Stream" 
             style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} 
             onError={(e) => {
-              console.log("Image load encountered an asset block. Falling back to reception layout placeholder.");
-              // 🟢 CHANGED: Brand new, highly distinct wedding reception layout fallback image
               e.target.src = "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800";
             }}
           />
         </div>
       </div>
 
+      {/* Right Sidebar Text Segment */}
       <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
@@ -202,7 +232,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timelineItems.length);
-    }, 7000);
+    }, 8500); // Expanded slightly to let the typing effect and slow motion breathe
 
     return () => clearInterval(interval);
   }, [timelineItems]);
@@ -210,10 +240,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const activeItem = timelineItems[currentSlideIndex] || timelineItems[0];
 
   return (
-    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'visible', backgroundColor: '#000', zIndex: 999 }}>
+    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000', zIndex: 999 }}>
       {activeItem && (
         <WeddingPhotoPlayer 
-          key={activeItem.id} 
+          key={activeItem.id} // Re-mounting via unique key forces the CSS crossfade animation automatically
           item={activeItem} 
           liveEventId={liveEventId}
         />
