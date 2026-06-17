@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import GuestUploadForm from './GuestUploadForm';
-import { MemorialAdminDashboard } from './memorial/MemorialAdminDashboard'; // UPDATED: Imported the custom graphical dashboard GUI
+import { MemorialAdminDashboard } from './memorial/MemorialAdminDashboard';
 import { FuneralSlideshow } from './FuneralSlideshow';
 import { db } from './firebaseConfig'; 
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -44,7 +44,7 @@ const MainApp = () => {
     }
 
     const docRef = doc(db, 'events', eventId);
-    
+
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
