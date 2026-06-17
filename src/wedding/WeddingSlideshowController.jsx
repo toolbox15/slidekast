@@ -225,14 +225,20 @@ const GET_WEDDING_WAITING_CARD = () => [
 ];
 
 export const WeddingSlideshowController = () => {
-  const { liveEventId } = getInputProps();
+  const remotionProps = getInputProps();
   const currentFrame = useCurrentFrame();
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const previousDataHashRef = useRef('');
 
+  // 📡 WEB STRIPPER FALLBACK: Extracts from browser URL bar directly if Remotion parameter context is undefined
+  const liveEventId = useMemo(() => {
+    if (remotionProps && remotionProps.liveEventId) return remotionProps.liveEventId;
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    return pathSegments[0] || 'ann-wedding-2026';
+  }, [remotionProps]);
+
   useEffect(() => {
-    const activeId = liveEventId || 'smith-wedding-2026';
-    const targetCollectionRef = collection(db, 'events', activeId, 'receptionStream');
+    const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
     const q = query(targetCollectionRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -275,8 +281,15 @@ export const WeddingSlideshowController = () => {
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
       {timeline && timeline.items && timeline.items.map((item) => {
         let opacity = 1;
-        try { opacity = calculateSlideOpacity(item, currentFrame); } catch (e) { opacity = 1; }
-        if (opacity <= 0) return null; 
+        try { 
+          opacity = calculateSlideOpacity(item, currentFrame); 
+          // ⚡ SAFETY CLAMP: If calculation yields invalid numbers or crossfades drop to <= 0 on empty pools, override to 1
+          if (isNaN(opacity) || opacity <= 0) {
+            opacity = 1;
+          }
+        } catch (e) { 
+          opacity = 1; 
+        }
 
         return (
           <WeddingPhotoPlayer 
