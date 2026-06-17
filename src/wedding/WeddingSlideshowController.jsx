@@ -93,7 +93,16 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
       
       <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
-          <img src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} />
+          <img 
+            src={imgUrl} 
+            alt="Live Stream" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} 
+            onError={(e) => {
+              console.log("Image load encountered an asset block. Falling back to reception layout placeholder.");
+              // 🟢 CHANGED: Brand new, highly distinct wedding reception layout fallback image
+              e.target.src = "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800";
+            }}
+          />
         </div>
       </div>
 
@@ -112,7 +121,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 };
 
 // ==========================================
-// 2. SUBCOLLECTION STREAM ONLY
+// 2. MAIN SYNC CONTROLLER
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCMQA0SGLYMq2lf0zSr8NQA_JrNDBFSAmk",
@@ -134,7 +143,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const liveEventId = useMemo(() => {
     if (passedEventId) return passedEventId;
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
-    return pathSegments[0] || 'wedding'; // 👈 DEFAULT FALLBACK CHANGED TO CLEAN "wedding" ID
+    return pathSegments[0] || 'wedding';
   }, [passedEventId]);
 
   useEffect(() => {
