@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { QRCodeCanvas } from 'qrcode.react';
 
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
@@ -32,7 +31,10 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   }, [messageText, item.type, item.id]);
 
   if (item.type === 'welcome') {
-    const qrCodeTargetUrl = `https://slidekast.vercel.app/${liveEventId}`;
+    // Generates a high-resolution, perfectly clean vector QR code background image dynamically
+    const qrCodeTargetUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
+      `https://slidekast.vercel.app/${liveEventId}`
+    )}&color=0-0-0&bgcolor=ffffff`;
 
     return (
       <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
@@ -46,7 +48,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container - Sized and Centered perfectly behind the Golden Frame Layout Area */}
+        {/* QR Code Container - Perfectly Centered and Filled inside the Golden Frame */}
         <div 
           style={{ 
             position: 'absolute', 
@@ -66,13 +68,10 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
             boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
           }}
         >
-          {/* High-fidelity browser Canvas vector QR renderer */}
-          <QRCodeCanvas
-            value={qrCodeTargetUrl}
-            size={380}
-            level="H"
-            bgColor="#ffffff"
-            fgColor="#000000"
+          <img 
+            src={qrCodeTargetUrl} 
+            alt="Scan QR Code" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
           />
         </div>
 
