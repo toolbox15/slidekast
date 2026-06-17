@@ -6,31 +6,119 @@ import { interpolate, spring, useVideoConfig } from 'remotion';
 import { buildSmartWeddingTimeline, calculateSlideOpacity } from './weddingUtils';
 
 // ==========================================
-// 1. UNIFIED WEDDING DISPLAY PLAYER
+// 1. UNIFIED WEDDING DISPLAY INTERSTITIAL & PHOTO PLAYER
 // ==========================================
-const WeddingPhotoPlayer = ({ item, opacity }) => {
+const WeddingPhotoPlayer = ({ item, opacity, liveEventId }) => {
   const { fps } = useVideoConfig();
   const frame = useCurrentFrame();
 
-  // Unified fallback layout checking to map various field names instantly
-  const messageText = item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!';
-  const senderName = item.photo.sender_name || item.photo.sender || 'Wedding Guest';
-  const imgUrl = item.photo.imageUrl || item.photo.image_url || '';
+  // Handle Welcome Interstitial Video Rendering State
+  if (item.type === 'welcome') {
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+      `https://slidekast.vercel.app/${liveEventId}`
+    )}&color=0-0-0&bgcolor=ffffff`;
 
-  // State to hold the progressively typed string text
+    return (
+      <div 
+        style={{ 
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: '#000000',
+          overflow: 'hidden',
+          opacity: opacity,
+          zIndex: 10
+        }}
+      >
+        {/* Full-bleed Video utilizing standard public folder routing fallback */}
+        <video
+          src="/Wedding1/welcome-bg.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 1
+          }}
+        />
+
+        {/* Left Box Overlay: QR Code Frame */}
+        <div 
+          style={{
+            position: 'absolute',
+            left: '37.8%',  
+            top: '53.5%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 5,
+            width: '272px',
+            height: '272px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#ffffff',
+            borderRadius: '8px',
+            boxShadow: '0 0 40px rgba(215, 180, 106, 0.4)'
+          }}
+        >
+          <img 
+            src={qrCodeUrl} 
+            alt="Scan QR Code" 
+            style={{ width: '90%', height: '90%', objectFit: 'contain' }} 
+          />
+        </div>
+
+        {/* Right Area: Gold Marquee Texts */}
+        <div 
+          style={{
+            position: 'absolute',
+            right: '4%',
+            top: '32%',
+            width: '42%',
+            height: '55%',
+            zIndex: 5,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div style={{
+            color: '#d9bf8d',
+            fontFamily: 'Georgia, serif',
+            fontSize: '3.3rem',
+            textAlign: 'center',
+            lineHeight: '1.4',
+            fontWeight: 'bold',
+            textShadow: '0 4px 12px rgba(0,0,0,0.9)'
+          }}>
+            <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
+            <p style={{ color: '#ffffff', fontSize: '2.4rem', fontStyle: 'italic', margin: 0 }}>
+              Scan the QR Code to share your photos and blessings directly to this live screen!
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- STANDARD PHOTO RENDER BLOCK ---
+  const messageText = item.photo?.message_text || item.photo?.message || 'Cheers to the beautiful couple!';
+  const senderName = item.photo?.sender_name || item.photo?.sender || 'Wedding Guest';
+  const imgUrl = item.photo?.imageUrl || item.photo?.image_url || '';
+
   const [typedMessage, setTypedMessage] = useState('');
-
-  // Running local layout calculations
   const motionScale = interpolate(frame, [0, 300], [1.0, 1.07], { extrapolateRight: 'clamp' });
   const motionTranslateY = interpolate(frame, [0, 300], [0, -12], { extrapolateRight: 'clamp' });
   const entranceSpring = spring({ frame, fps, config: { damping: 16 } });
 
-  // RUN TYPEWRITER DIRECTLY PER COMPONENT INSTANCE LIFECYCLE
   useEffect(() => {
     let charIndex = 0;
-    setTypedMessage(''); // Clear out any residual text instantly on mount
-
-    // 3.0 frames per character at 30fps is roughly 10 characters typed per second
+    setTypedMessage('');
     const intervalDuration = (1000 / fps) * 3.0; 
 
     const typerInterval = setInterval(() => {
@@ -45,150 +133,23 @@ const WeddingPhotoPlayer = ({ item, opacity }) => {
     return () => clearInterval(typerInterval);
   }, [messageText, fps]);
 
-  if (!item || !item.photo || !imgUrl) return null;
+  if (!imgUrl) return null;
 
   return (
-    <div 
-      style={{ 
-        position: 'absolute',
-        inset: 0,
-        display: 'flex', 
-        flexDirection: 'row', // Restores full-width side-by-side proportions
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        backgroundColor: '#000000',
-        overflow: 'hidden'
-      }}
-    >
-      {/* Ambient Backdrop Blur (Transitions gracefully) */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url(${imgUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(45px) brightness(16%)',
-          transform: 'scale(1.15)', 
-          zIndex: 1,
-          opacity: opacity
-        }}
-      />
-
-      {/* Left Column: Full-Scale Secure Photo Viewport (65% Width restored) */}
-      <div style={{ 
-        width: '65%', 
-        height: '100%', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        zIndex: 2,
-        padding: '40px 30px',
-        boxSizing: 'border-box',
-        transform: `scale(${entranceSpring})`,
-        opacity: opacity
-      }}>
-        <div style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          overflow: 'hidden', 
-          borderRadius: '16px',
-          boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)'
-        }}>
-          <img 
-            src={imgUrl} 
-            alt="Live Wedding Stream" 
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain', 
-              transform: `scale(${motionScale}) translateY(${motionTranslateY}px)`,
-            }}
-          />
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1, opacity: opacity }} />
+      <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box', transform: `scale(${entranceSpring})`, opacity: opacity }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
+          <img src={imgUrl} alt="Live Wedding Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${motionScale}) translateY(${motionTranslateY}px)` }} />
         </div>
       </div>
-
-      {/* Right Column: Permanent Sidebar Display Profile Area (35% Width restored) */}
-      <div 
-        style={{ 
-          width: '35%', 
-          height: '100%', 
-          background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))',
-          borderLeft: '4px solid rgba(217, 191, 141, 0.5)', 
-          display: 'flex',
-          flexDirection: 'column', 
-          alignItems: 'center',
-          justifyContent: 'flex-start', 
-          padding: '0 35px 40px 35px', 
-          boxSizing: 'border-box',
-          zIndex: 5,
-          textAlign: 'center',
-          position: 'relative'
-        }}
-      >
-        {/* Luxury Gold Header Decorative Divider Filigree */}
-        <img 
-          src={staticFile('Wedding1/gold-divider.png')} 
-          alt=""
-          style={{
-            width: 'calc(100% - 4px)', 
-            height: 'auto',
-            marginTop: '2px', 
-            marginBottom: '50px',
-            mixBlendMode: 'screen', 
-            opacity: 0.95,
-            flexShrink: 0
-          }}
-        />
-
-        {/* Curated Couple Profile Circle */}
+      <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center', position: 'relative' }}>
+        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95, flexShrink: 0 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: '25px' }}>
-          <img 
-            src={staticFile('Wedding1/couple-profile.png')} 
-            style={{ 
-              width: '140px', 
-              height: '140px', 
-              borderRadius: '50%', 
-              objectFit: 'cover', 
-              border: '4px solid #d9bf8d',
-              boxShadow: '0 12px 24px rgba(0,0,0,0.4)'
-            }} 
-            alt="Bride and Groom" 
-          />
+          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Bride and Groom" />
         </div>
-
-        {/* Guest Identity Heading Label */}
-        <span style={{ 
-          color: '#d9bf8d', 
-          fontFamily: 'Georgia, serif', 
-          fontSize: '3.0rem', 
-          fontWeight: 'bold', 
-          display: 'block',
-          letterSpacing: '1px',
-          marginBottom: '24px',
-          textShadow: '3px 3px 6px rgba(0,0,0,0.6)'
-        }}>
-          {senderName}
-        </span>
-
-        {/* Guest Text Message Block with Synchronized Multi-Slide Typewriter Processing */}
-        <p style={{ 
-          color: '#ffffff', 
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '2.8rem', 
-          margin: 0, 
-          fontStyle: 'italic',
-          fontWeight: '600', 
-          lineHeight: '1.4',
-          maxWidth: '95%',
-          textShadow: '2px 2px 5px rgba(0,0,0,0.9)'
-        }}>
-          {typedMessage ? `"${typedMessage}"` : ""}
-        </p>
+        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)' }}>{senderName}</span>
+        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)' }}>{typedMessage ? `"${typedMessage}"` : ""}</p>
       </div>
     </div>
   );
@@ -209,35 +170,21 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-// Beautiful high-end holding deck while waiting for the very first upload on a new wedding channel
-const GET_WEDDING_WAITING_CARD = () => [
-  { 
-    id: 'awaiting-first-upload',
-    photo: {
-      imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200', 
-      image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200',
-      message_text: 'Scan the QR code to upload your photos and blessings directly onto this live screen!', 
-      message: 'Scan the QR code to upload your photos and blessings directly onto this live screen!',
-      sender_name: 'Welcome Guests',
-      sender: 'Welcome Guests'
-    }
-  }
-];
-
 export const WeddingSlideshowController = () => {
   const remotionProps = getInputProps();
   const currentFrame = useCurrentFrame();
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
+  const [dbStatus, setDbStatus] = useState('Initializing connection...');
   const previousDataHashRef = useRef('');
 
-  // 📡 WEB STRIPPER FALLBACK: Extracts from browser URL bar directly if Remotion parameter context is undefined
   const liveEventId = useMemo(() => {
     if (remotionProps && remotionProps.liveEventId) return remotionProps.liveEventId;
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
-    return pathSegments[0] || 'ann-wedding-2026';
+    return pathSegments[0] || 'smith-wedding-2026';
   }, [remotionProps]);
 
   useEffect(() => {
+    setDbStatus(`Connecting to path: events/${liveEventId}/receptionStream...`);
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
     const q = query(targetCollectionRef);
 
@@ -245,9 +192,14 @@ export const WeddingSlideshowController = () => {
       const updatedPhotos = [];
       let incomingDataString = '';
 
+      if (snapshot.empty) {
+        setDbStatus(`Connected! Stream is active but channel array is completely empty [0 documents].`);
+      } else {
+        setDbStatus(`Connected! Successfully pulled down ${snapshot.size} active stream documents.`);
+      }
+
       snapshot.forEach((doc) => {
         const data = doc.data();
-        // Skip document if it doesn't contain a valid link to point to
         if (!data.imageUrl && !data.image_url) return;
 
         updatedPhotos.push({ id: doc.id, photo: data });
@@ -260,33 +212,28 @@ export const WeddingSlideshowController = () => {
       }
     }, (error) => {
       console.error("Firestore stream error: ", error);
+      setDbStatus(`Firestore Connection Refused: ${error.message}`);
     });
 
     return () => unsubscribe();
   }, [liveEventId]);
 
-  // Formulates raw asset items dynamically without hardcoded fallback array constraints
   const timeline = useMemo(() => {
-    const baseDeck = liveGuestUploads.length > 0 ? liveGuestUploads : GET_WEDDING_WAITING_CARD();
-    
-    try {
-      // Safely fall back if the utility calculations hit an un-initialized state frame block
-      return buildSmartWeddingTimeline(baseDeck.map(i => i.photo), liveGuestUploads, currentFrame);
-    } catch (e) {
-      return { items: baseDeck };
-    }
+    return buildSmartWeddingTimeline([], liveGuestUploads, currentFrame);
   }, [liveGuestUploads, currentFrame]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
+      {/* Real-time Overlay Status Tracker so we can trace pipeline flow visually */}
+      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 9999, background: 'rgba(0,0,0,0.85)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.3)' }}>
+        🟢 SYSTEM PIPELINE STATE: {dbStatus}
+      </div>
+
       {timeline && timeline.items && timeline.items.map((item) => {
         let opacity = 1;
         try { 
           opacity = calculateSlideOpacity(item, currentFrame); 
-          // ⚡ SAFETY CLAMP: If calculation yields invalid numbers or crossfades drop to <= 0 on empty pools, override to 1
-          if (isNaN(opacity) || opacity <= 0) {
-            opacity = 1;
-          }
+          if (isNaN(opacity) || opacity <= 0) return null;
         } catch (e) { 
           opacity = 1; 
         }
@@ -296,6 +243,7 @@ export const WeddingSlideshowController = () => {
             key={item.id} 
             item={item} 
             opacity={opacity} 
+            liveEventId={liveEventId}
           />
         );
       })}
