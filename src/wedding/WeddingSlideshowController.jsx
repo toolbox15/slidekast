@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
-import { buildSmartWeddingTimeline } from './weddingUtils';
 
 // ==========================================
-// 1. UNIFIED WEDDING DISPLAY PLAYER (PURE BROWSER)
+// 1. UNIFIED WEDDING DISPLAY PLAYER
 // ==========================================
 const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   const videoRef = useRef(null);
@@ -31,6 +30,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
+  // Render Welcome Interstitial
   if (item.type === 'welcome') {
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
@@ -48,12 +48,12 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* Left Box QR Code */}
+        {/* QR Code Container */}
         <div style={{ position: 'absolute', left: '37.8%', top: '53.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '272px', height: '272px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '8px', boxShadow: '0 0 40px rgba(215, 180, 106, 0.4)' }}>
           <img src={qrCodeUrl} alt="Scan QR Code" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
         </div>
 
-        {/* Right Box Text */}
+        {/* Instructions */}
         <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
             <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
@@ -91,7 +91,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 };
 
 // ==========================================
-// 2. DATABASE SYNC ENGINE
+// 2. MAIN SYNC CONTROLLER
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCMQA0SGLYMq2lf0zSr8NQA_JrNDBFSAmk",
@@ -108,7 +108,7 @@ const db = getFirestore(app);
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [dbStatus, setDbStatus] = useState('Initializing pipeline...');
+  const [dbStatus, setDbStatus] = useState('Initializing execution...');
   const previousDataHashRef = useRef('');
 
   const liveEventId = useMemo(() => {
@@ -127,9 +127,9 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       let incomingDataString = '';
 
       if (snapshot.empty) {
-        setDbStatus(`Connected! Stream active. Zero data uploaded yet.`);
+        setDbStatus(`Connected! Stream active. Zero entries uploaded yet.`);
       } else {
-        setDbStatus(`Connected! Found ${snapshot.size} uploaded items.`);
+        setDbStatus(`Connected! Found ${snapshot.size} uploaded entries.`);
       }
 
       snapshot.forEach((doc) => {
@@ -150,24 +150,47 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => unsubscribe();
   }, [liveEventId]);
 
-  const timeline = useMemo(() => {
-    return buildSmartWeddingTimeline(liveGuestUploads);
+  // 🛠️ IN-LINE TIMELINE COMPILER (No external utility functions)
+  const timelineItems = useMemo(() => {
+    let combined = [{ id: 'welcome-initial', type: 'welcome' }];
+
+    if (liveGuestUploads.length > 0) {
+      liveGuestUploads.forEach((item, index) => {
+        combined.push({
+          id: `photo-${index}-${item.id}`,
+          type: 'photo',
+          photo: item.photo
+        });
+
+        // Inject welcome slide after every 5 guest photos
+        if ((index + 1) % 5 === 0) {
+          combined.push({
+            id: `welcome-loop-${index}`,
+            type: 'welcome'
+          });
+        }
+      });
+    }
+
+    return combined;
   }, [liveGuestUploads]);
 
+  // Auto-advance loop ticker
   useEffect(() => {
-    if (!timeline.items || timeline.items.length <= 1) return;
+    if (timelineItems.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timeline.items.length);
+      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timelineItems.length);
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [timeline.items]);
+  }, [timelineItems]);
 
-  const activeItem = timeline.items?.[currentSlideIndex] || timeline.items?.[0];
+  const activeItem = timelineItems[currentSlideIndex] || timelineItems[0];
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
+      {/* Absolute diagnostic tracker box */}
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)' }}>
         ⚙️ SYSTEM CORE TRACE: {dbStatus}
       </div>
