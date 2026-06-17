@@ -308,7 +308,7 @@ const GoldDustParticle = ({ angle, delay, distance, size }) => {
   );
 };
 
-const Background = ({ funeralHomeName, lovedOneName, frame }) => {
+const Background = ({ frame }) => {
   const shimmer = linearInterpolate(frame % 180, [0, 90, 180], [0.18, 0.34, 0.18]);
 
   return (
@@ -377,9 +377,6 @@ const MobileLiveChatFeed = ({ uploads, onGuestSubmit, onPhotoUpload }) => {
                   <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '14px', fontWeight: 500 }}>
                     {msg.sender_name || 'Anonymous'}
                   </span>
-                  <svg viewBox="0 0 24 24" style={{ width: '11px', height: '11px', fill: 'rgba(217,191,141,0.6)' }}>
-                    <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
-                  </svg>
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.4, margin: 0 }}>
                   {msg.message_text}
@@ -415,7 +412,7 @@ const MobileLiveChatFeed = ({ uploads, onGuestSubmit, onPhotoUpload }) => {
 
           <textarea 
             name="message_text"
-            placeholder="Write your tribute or memory here..." 
+            placeholder="Write your message here..." 
             rows="3"
             style={{
               width: '100%', padding: '12px', borderRadius: '6px', 
@@ -426,7 +423,7 @@ const MobileLiveChatFeed = ({ uploads, onGuestSubmit, onPhotoUpload }) => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ color: '#d9bf8d', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              📎 Attach a Memory or Profile Photo
+              📎 Attach a Memory Photo
             </label>
             <input 
               type="file" 
@@ -448,31 +445,32 @@ const MobileLiveChatFeed = ({ uploads, onGuestSubmit, onPhotoUpload }) => {
   );
 };
 
-const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
+// ⚡ HIGH CONTEXT BUILDER: Dynamically adapts names based on URL strings
+const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos, isWedding }) => {
   return [
     {
       id: 'early-years',
-      eyebrow: 'Legacy Childhood Photos',
-      title: 'The Early Years',
-      subtitle: 'A tender look back at childhood, siblings, school days, and first memories.',
+      eyebrow: isWedding ? 'Growing Up' : 'Legacy Childhood Photos',
+      title: isWedding ? 'Before We Met' : 'The Early Years',
+      subtitle: isWedding ? 'Cherished childhood memories, school days, and family roots.' : 'A tender look back at childhood, siblings, school days, and first memories.',
       frameShape: 'rounded',
-      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Early Years ${index + 1}`)),
+      photos: earlyYearsPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, isWedding ? `Memories ${index + 1}` : `Early Years ${index + 1}`)),
     },
     {
       id: 'life-and-family',
-      eyebrow: 'Marriage, Children, Milestones',
-      title: 'Building a Life & Family',
-      subtitle: 'The chapters of partnership, parenthood, home, work, and milestones.',
+      eyebrow: isWedding ? 'Our Love Story' : 'Marriage, Children, Milestones',
+      title: isWedding ? 'Dating & Adventures' : 'Building a Life & Family',
+      subtitle: isWedding ? 'The wonderful chapters of falling in love, trips, and shared moments.' : 'The chapters of partnership, parenthood, home, work, and milestones.',
       frameShape: 'rounded',
-      photos: familyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Family Chapter ${index + 1}`)),
+      photos: familyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, isWedding ? `Love Story ${index + 1}` : `Family Chapter ${index + 1}`)),
     },
     {
       id: 'lasting-legacy',
-      eyebrow: 'Recent Photos, Grandkids, Community Impact',
-      title: 'A Lasting Legacy',
-      subtitle: 'Recent moments, grandchildren, friendships, service, and community impact.',
+      eyebrow: isWedding ? 'The Big Day' : 'Recent Photos, Grandkids, Community Impact',
+      title: isWedding ? 'Better Together' : 'A Lasting Legacy',
+      subtitle: isWedding ? 'Celebrating the start of forever with our friends and loved ones.' : 'Recent moments, grandchildren, friendships, service, and community impact.',
       frameShape: 'oval',
-      photos: legacyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, `Legacy Moment ${index + 1}`)),
+      photos: legacyPhotos.map((photo, index) => normalizePhoto({ image_url: photo }, isWedding ? `Celebration ${index + 1}` : `Legacy Moment ${index + 1}`)),
     },
   ].map((section) => ({
     ...section,
@@ -482,7 +480,7 @@ const buildSections = ({ earlyYearsPhotos, familyPhotos, legacyPhotos }) => {
   }));
 };
 
-const LiveTributeLowerThird = ({ uploads, frame }) => {
+const LiveTributeLowerThird = ({ uploads, frame, isWedding }) => {
   const seenMessageIds = useRef(new Set());
   const currentMessageIdRef = useRef(null);
   const [isFirstTime, setIsFirstTime] = useState(false);
@@ -491,10 +489,10 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
     () => uploads.length > 0 ? uploads : [{
       id: 'awaiting-live-tribute',
       image_url: '',
-      sender_name: 'Guestbook',
-      message_text: 'Your memories will appear here.',
+      sender_name: isWedding ? 'Guestbook' : 'Memorial',
+      message_text: isWedding ? 'Leave a blessing to see your message scroll here.' : 'Your memories will appear here.',
     }],
-    [uploads]
+    [uploads, isWedding]
   );
 
   const activeIndex = Math.floor(frame / LIVE_LOWER_THIRD_FRAMES) % liveUploads.length;
@@ -617,23 +615,26 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
             </span>
 
             <div style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
-              <svg
-                viewBox="0 0 24 24"
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  fill: '#d9bf8d',
-                  marginLeft: '10px',
-                  marginBottom: '2px',
-                  filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
-                  transition: 'opacity 0.25s ease-out',
-                  opacity: shouldDisperse ? 0 : 1, 
-                }}
-              >
-                <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
-              </svg>
+              {/* ✝️ CONDITIONAL ICON: Hide the memorial cross symbol entirely if it is a wedding event */}
+              {!isWedding && (
+                <svg
+                  viewBox="0 0 24 24"
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    fill: '#d9bf8d',
+                    marginLeft: '10px',
+                    marginBottom: '2px',
+                    filter: 'drop-shadow(0 0 4px rgba(217,191,141,0.5))',
+                    transition: 'opacity 0.25s ease-out',
+                    opacity: shouldDisperse ? 0 : 1, 
+                  }}
+                >
+                  <path d="M10,2 H14 V6 H18 V10 H14 V22 H10 V10 H6 V6 H10 Z" />
+                </svg>
+              )}
 
-              {shouldDisperse && crossPlacements.map((config, idx) => (
+              {shouldDisperse && !isWedding && crossPlacements.map((config, idx) => (
                 <AscendingCrossParticle 
                   key={`${activeUpload.id}-cloncross-${idx}`} 
                   delay={config.delay}
@@ -656,7 +657,7 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
           </div>
 
           <div style={{ color: 'rgba(255,255,255,0.88)', fontSize: '14px', lineHeight: 1.3, fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {activeUpload.message_text || 'Shared a memory.'}
+            {activeUpload.message_text || (isWedding ? 'Sent congratulations!' : 'Shared a memory.')}
           </div>
         </div>
       </div>
@@ -665,8 +666,6 @@ const LiveTributeLowerThird = ({ uploads, frame }) => {
 };
 
 export const MemorialSlideshowController = ({
-  funeralHomeName = 'Evergreen Funeral Home',
-  lovedOneName = 'Margaret Elaine Parker',
   liveEventId = 'smith-wedding-2026',
   earlyYearsPhotos = [],
   familyPhotos = [],
@@ -676,6 +675,11 @@ export const MemorialSlideshowController = ({
   const [frame, setFrame] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const lastTimeRef = useRef(Date.now());
+
+  // Detect if the running URL routing channel belongs to a wedding setup
+  const isWedding = useMemo(() => {
+    return liveEventId === 'smith-wedding-2026' || liveEventId.toLowerCase().includes('wedding');
+  }, [liveEventId]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -701,7 +705,6 @@ export const MemorialSlideshowController = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
-  // 📡 DYNAMIC EXPRESS LANE CONNECTION FIX: Automatically handles subcollections
   const { tributes } = useLiveTributes(liveEventId);
   const lowerThirdUploads = useMemo(
     () => (tributes.length > 0 ? tributes : liveTributesSeed).map((upload, index) => normalizeUpload(upload, index)),
@@ -709,8 +712,8 @@ export const MemorialSlideshowController = ({
   );
 
   const sections = useMemo(
-    () => buildSections({ earlyYearsPhotos, familyPhotos, legacyPhotos }),
-    [earlyYearsPhotos, familyPhotos, legacyPhotos]
+    () => buildSections({ earlyYearsPhotos, familyPhotos, legacyPhotos, isWedding }),
+    [earlyYearsPhotos, familyPhotos, legacyPhotos, isWedding]
   );
   
   const timeline = useMemo(() => buildTimeline(sections), [sections]);
@@ -720,18 +723,11 @@ export const MemorialSlideshowController = ({
   const handleMockFormSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    console.log("Mock submission received:", {
-      sender_name: formData.get("sender_name"),
-      message_text: formData.get("message_text")
-    });
     e.currentTarget.reset();
   };
 
   const handleMockPhotoUpload = (e) => {
     const targetFile = e.target.files[0];
-    if (targetFile) {
-      console.log("File captured ready for background compression setup:", targetFile.name);
-    }
   };
 
   return (
@@ -758,9 +754,8 @@ export const MemorialSlideshowController = ({
         }
       `}</style>
 
-      <Background funeralHomeName={funeralHomeName} lovedOneName={lovedOneName} frame={frame} />
+      <Background frame={frame} />
       
-      {/* LEFT SIDE / TOP HALF: CINEMATIC REEL CONTAINER */}
       <div 
         style={{ 
           flex: isMobile ? '0 0 40%' : '0 0 100%', 
@@ -798,52 +793,17 @@ export const MemorialSlideshowController = ({
 
         {!isMobile && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', zIndex: 50 }}>
-            <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} />
+            <LiveTributeLowerThird uploads={lowerThirdUploads} frame={frame} isWedding={isWedding} />
           </div>
         )}
       </div>
 
-      {/* RIGHT SIDE / BOTTOM HALF: ACTIVE INTERACTION FEEDS */}
       {isMobile && (
         <MobileLiveChatFeed 
           uploads={lowerThirdUploads} 
           onGuestSubmit={handleMockFormSubmit}
           onPhotoUpload={handleMockPhotoUpload}
         />
-      )}
-
-      {/* FLOATING ACTION BRANDING */}
-      {isMobile && (
-        <a 
-          href="https://slidekast.com" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{
-            position: 'fixed',
-            bottom: '16px',
-            right: '16px',
-            zIndex: 99999,
-            backgroundColor: '#1c232b', 
-            color: '#ffffff',
-            padding: '8px 14px',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
-            textDecoration: 'none',
-            fontFamily: 'sans-serif',
-            letterSpacing: '0.5px',
-            border: '1px solid rgba(255, 255, 255, 0.25)', 
-            opacity: 1, 
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-        >
-          <span style={{ color: 'rgba(255, 255, 255, 0.8)' }}>powered by</span>
-          <strong style={{ color: '#d9bf8d', fontWeight: '700' }}>slidekast</strong>
-        </a>
       )}
     </div>
   );
