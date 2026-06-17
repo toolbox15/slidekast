@@ -68,13 +68,13 @@ const EVENT_CONFIG = {
   },
 };
 
-export default function GuestUploadForm() {
-  // ⚡ DYNAMIC UPDATE: Automatically reads "?event=xyz" from the browser link!
+// ⚡ ROUTING FIX: Accepting the eventId directly from main.jsx 
+export default function GuestUploadForm({ eventId }) {
+
+  // Uses the URL parameter passed down from main.jsx path segmenting
   const eventType = useMemo(() => {
-    const searchParameters = new URLSearchParams(window.location.search);
-    const urlEventId = searchParameters.get("event");
-    return urlEventId || "wedding"; // Falls back to wedding if no parameter exists
-  }, []);
+    return eventId || "wedding"; 
+  }, [eventId]);
 
   // Targets your active theme layout configurations cleanly
   const event = useMemo(() => {
@@ -88,6 +88,11 @@ export default function GuestUploadForm() {
     if (lowerType.includes("graduation")) return EVENT_CONFIG.graduation;
 
     return EVENT_CONFIG.wedding;
+  }, [eventType]);
+
+  // 📡 EXPRESS LANE FILTER: Identifies if this track bypasses moderators completely
+  const isInstantStream = useMemo(() => {
+    return eventType === "Tom-Memorial" || eventType.toLowerCase().includes("stream");
   }, [eventType]);
 
   const [name, setName] = useState("");
@@ -158,27 +163,23 @@ export default function GuestUploadForm() {
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${photo.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
       
-      // Uploads the photo cleanly using the asset template configuration
       const storageLocationRef = ref(storage, `events/${eventType}/${uniqueFileName}`);
       
       const uploadSnapshot = await uploadBytes(storageLocationRef, photo);
       const cloudDisplayUrl = await getDownloadURL(uploadSnapshot.ref);
 
-      // 2. Dispatch payloads straight to your targeted live stream collection
-      // ⚡ DYNAMIC UPDATE: Routes right into the specific folder identifier from the URL
-      const eventSlugNode = eventType;
-      
-      // Points to "live_tributes" collection to fully satisfy your database layout security rules
-      const targetFirestoreCollection = collection(db, "events", eventSlugNode, "live_tributes");
+      // 2. Determine targeted live stream collection based on express vs approval rules
+      const collectionPath = isInstantStream ? "receptionStream" : "live_tributes";
+      const targetFirestoreCollection = collection(db, "events", eventType, collectionPath);
 
       // Passes properties formatted explicitly to clear your backend firewall size parameters
       await addDoc(targetFirestoreCollection, {
-        sender_name: name.trim().substring(0, 30), // Keeps length below rule limits
-        message_text: message.trim().substring(0, 80), // Keeps length below rule limits
+        sender_name: name.trim().substring(0, 30), 
+        message_text: message.trim().substring(0, 120), 
         imageUrl: cloudDisplayUrl,
         eventType: eventType,
         createdAt: timestamp,
-        approved: false 
+        approved: isInstantStream ? true : false // ⚡ AUTO-APPROVE: Instantly live if Tom-Memorial express route
       });
 
       setStatus("success");
@@ -202,16 +203,25 @@ export default function GuestUploadForm() {
       <main className="page-shell">
         <section className="form-card success-card">
           <div className="success-icon" aria-hidden="true">✓</div>
+          
+          {/* ⚡ DYNAMIC EYEBROW: Instantly loads matching event identifier */}
           <p className="event-eyebrow">{event.eventName}</p>
+          
           <h1>Thank You</h1>
           <p className="success-message">
             Your photo and message were submitted successfully.
           </p>
+          
+          {/* ⚡ DYNAMIC NOTICE: Toggles messaging seamlessly based on tracking pathway */}
           <div className="approval-notice">
-            Your submission is awaiting approval before appearing on the live display.
+            {isInstantStream 
+              ? "Your submission is appearing instantly on the live screen display!" 
+              : "Your submission is awaiting approval before appearing on the live display."
+            }
           </div>
+          
           <button className="primary-button" type="button" onClick={resetForm}>
-            Submit Another Memory
+            {eventType === "Tom-Memorial" ? "Submit Another Memory" : "Submit Another Photo"}
           </button>
           <PoweredBy />
         </section>
