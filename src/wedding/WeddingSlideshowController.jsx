@@ -11,7 +11,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 
   const messageText = item.photo?.message_text || item.photo?.message || 'Cheers to the beautiful couple!';
   const senderName = item.photo?.sender_name || item.photo?.sender || 'Wedding Guest';
-  const imgUrl = item.photo?.imageUrl || item.photo?.image_url || '';
+  const imgUrl = item.photo?.imageUrl || item.photo?.image_url || item.photo?.url || item.photo?.downloadURL || '';
 
   useEffect(() => {
     if (item.type !== 'photo') return;
@@ -47,7 +47,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container - Precision Aligned */}
+        {/* QR Code Container */}
         <div 
           style={{ 
             position: 'absolute', 
@@ -139,8 +139,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   useEffect(() => {
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
-    
-    // 🛠️ BYPASS MODERATION: Pull down ALL collection docs dynamically without filtering out status fields
     const q = query(targetCollectionRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -149,11 +147,14 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        // Snag both camelCase and snake_case urls regardless of moderation properties
-        if (!data.imageUrl && !data.image_url) return;
+        
+        // 📡 COMPREHENSIVE LINK PARSER
+        // Extracts the image path whether the database field is named imageUrl, image_url, url, or downloadURL
+        const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
+        if (!targetUrl) return;
         
         updatedPhotos.push({ id: doc.id, photo: data });
-        incomingDataString += `${doc.id}-${data.image_url || data.imageUrl || ''};`;
+        incomingDataString += `${doc.id}-${targetUrl};`;
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
@@ -161,7 +162,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
       }
     }, (error) => {
-      console.error("Firestore sync offline", error);
+      console.error("Firestore sync tracking offline", error);
     });
 
     return () => unsubscribe();

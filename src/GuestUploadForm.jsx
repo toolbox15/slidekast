@@ -68,20 +68,15 @@ const EVENT_CONFIG = {
   },
 };
 
-// ⚡ ROUTING FIX: Accepting the eventId directly from main.jsx 
 export default function GuestUploadForm({ eventId }) {
 
-  // Uses the URL parameter passed down from main.jsx path segmenting
   const eventType = useMemo(() => {
     return eventId || "wedding"; 
   }, [eventId]);
 
-  // Targets your active theme layout configurations cleanly
   const event = useMemo(() => {
-    // 1. Check for exact match (like "Tom-Memorial")
     if (EVENT_CONFIG[eventType]) return EVENT_CONFIG[eventType];
 
-    // 2. Smart Scan fallback: checks if the text includes keywords
     const lowerType = eventType.toLowerCase();
     if (lowerType.includes("memorial")) return EVENT_CONFIG.memorial;
     if (lowerType.includes("birthday")) return EVENT_CONFIG.birthday;
@@ -90,9 +85,9 @@ export default function GuestUploadForm({ eventId }) {
     return EVENT_CONFIG.wedding;
   }, [eventType]);
 
-  // 📡 EXPRESS LANE FILTER: Identifies if this track bypasses moderators completely
+  // 📡 FORCED INSTANT ACTION: Automatically set to true for weddings to skip moderation text displays
   const isInstantStream = useMemo(() => {
-    return eventType === "Tom-Memorial" || eventType.toLowerCase().includes("stream");
+    return eventType === "Tom-Memorial" || eventType.toLowerCase().includes("wedding") || eventType.toLowerCase().includes("stream");
   }, [eventType]);
 
   const [name, setName] = useState("");
@@ -159,7 +154,6 @@ export default function GuestUploadForm({ eventId }) {
     try {
       setStatus("uploading");
 
-      // 1. Process Live Firebase Cloud Storage upload bucket pipeline
       const timestamp = Date.now();
       const uniqueFileName = `${timestamp}_${photo.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
       
@@ -168,18 +162,17 @@ export default function GuestUploadForm({ eventId }) {
       const uploadSnapshot = await uploadBytes(storageLocationRef, photo);
       const cloudDisplayUrl = await getDownloadURL(uploadSnapshot.ref);
 
-      // 2. Determine targeted live stream collection based on express vs approval rules
-      const collectionPath = isInstantStream ? "receptionStream" : "live_tributes";
+      // ⚡ FORCE LIVE WEDDING ACCESS: Weddings now funnel straight to receptionStream folder!
+      const collectionPath = isInstantStream || eventType.toLowerCase().includes("wedding") ? "receptionStream" : "live_tributes";
       const targetFirestoreCollection = collection(db, "events", eventType, collectionPath);
 
-      // Passes properties formatted explicitly to clear your backend firewall size parameters
       await addDoc(targetFirestoreCollection, {
         sender_name: name.trim().substring(0, 30), 
         message_text: message.trim().substring(0, 120), 
         imageUrl: cloudDisplayUrl,
         eventType: eventType,
         createdAt: timestamp,
-        approved: isInstantStream ? true : false // ⚡ AUTO-APPROVE: Instantly live if Tom-Memorial express route
+        approved: true 
       });
 
       setStatus("success");
@@ -204,7 +197,6 @@ export default function GuestUploadForm({ eventId }) {
         <section className="form-card success-card">
           <div className="success-icon" aria-hidden="true">✓</div>
           
-          {/* ⚡ DYNAMIC EYEBROW: Instantly loads matching event identifier */}
           <p className="event-eyebrow">{event.eventName}</p>
           
           <h1>Thank You</h1>
@@ -212,12 +204,8 @@ export default function GuestUploadForm({ eventId }) {
             Your photo and message were submitted successfully.
           </p>
           
-          {/* ⚡ DYNAMIC NOTICE: Toggles messaging seamlessly based on tracking pathway */}
           <div className="approval-notice">
-            {isInstantStream 
-              ? "Your submission is appearing instantly on the live screen display!" 
-              : "Your submission is awaiting approval before appearing on the live display."
-            }
+            Your submission is appearing instantly on the live screen display!
           </div>
           
           <button className="primary-button" type="button" onClick={resetForm}>
@@ -283,7 +271,7 @@ export default function GuestUploadForm({ eventId }) {
                   className="hidden-file-input"
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  // 🟢 REMOVED capture="environment" to unlock your local phone gallery roll option!
                   onChange={handlePhotoChange}
                 />
               </label>
