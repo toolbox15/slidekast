@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, query, doc } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
@@ -11,8 +11,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 
   const currentPhoto = item?.photo || {};
   const messageText = currentPhoto.message_text || currentPhoto.message || 'Cheers to the beautiful couple!';
-  const senderName = currentPhoto.sender_name || currentPhoto.sender || 'Pre-loaded Memory';
-  const imgUrl = currentPhoto.imageUrl || currentPhoto.image_url || currentPhoto.url || currentPhoto.downloadURL || String(item.rawUrl || '');
+  const senderName = currentPhoto.sender_name || currentPhoto.sender || 'Wedding Guest';
+  const imgUrl = currentPhoto.imageUrl || currentPhoto.image_url || currentPhoto.url || currentPhoto.downloadURL || '';
 
   useEffect(() => {
     if (item.type !== 'photo' || !messageText) return;
@@ -34,9 +34,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   }, [messageText, item.type, item.id]);
 
   if (item.type === 'welcome') {
-    const qrCodeTargetUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-      `https://slidekast.vercel.app/${liveEventId}`
-    )}&color=0-0-0&bgcolor=ffffff`;
+    const qrCodeTargetUrl = `https://slidekast.vercel.app/${liveEventId}`;
+    const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
       <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
@@ -70,7 +69,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
             boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
           }}
         >
-          <img src={qrCodeTargetUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
 
         {/* Instructions */}
@@ -101,7 +100,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
       <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile Layout" />
+          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
         </div>
         <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)' }}>{senderName}</span>
         <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)' }}>
@@ -113,7 +112,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
 };
 
 // ==========================================
-// 2. DUAL-CHANNEL SYNC CONTROLLER
+// 2. SUBCOLLECTION STREAM ONLY
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCMQA0SGLYMq2lf0zSr8NQA_JrNDBFSAmk",
@@ -129,34 +128,15 @@ const db = getFirestore(app);
 
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
-  const [rootDocumentPhotos, setRootDocumentPhotos] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const previousDataHashRef = useRef('');
 
   const liveEventId = useMemo(() => {
     if (passedEventId) return passedEventId;
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
-    return pathSegments[0] || 'smith-wedding-2026';
+    return pathSegments[0] || 'wedding'; // 👈 DEFAULT FALLBACK CHANGED TO CLEAN "wedding" ID
   }, [passedEventId]);
 
-  // Channel 1: Listen to root document fields array lists (earlyYearsPhotos)
-  useEffect(() => {
-    const docRef = doc(db, 'events', liveEventId);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const combinedRootArrays = [
-          ...(data.earlyYearsPhotos || []),
-          ...(data.familyPhotos || []),
-          ...(data.legacyPhotos || [])
-        ];
-        setRootDocumentPhotos(combinedRootArrays);
-      }
-    });
-    return () => unsubscribe();
-  }, [liveEventId]);
-
-  // Channel 2: Listen to guest uploads live subcollection
   useEffect(() => {
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
     const q = query(targetCollectionRef);
@@ -179,42 +159,34 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
       }
     }, (error) => {
-      console.error("Firestore sync tracking offline", error);
+      console.error("Firestore sync offline", error);
     });
 
     return () => unsubscribe();
   }, [liveEventId]);
 
-  // Unified Timeline Compiler: Merges both root array pictures and live guest subcollection pictures
   const timelineItems = useMemo(() => {
     let combined = [{ id: 'welcome-initial', type: 'welcome' }];
-    let poolIndex = 0;
 
-    // 1. Add any live uploads first
     if (liveGuestUploads.length > 0) {
       liveGuestUploads.forEach((item, index) => {
-        combined.push({ id: `guest-${index}-${item.id}`, type: 'photo', photo: item.photo });
-        poolIndex++;
-        if (poolIndex % 4 === 0) combined.push({ id: `welcome-loop-g-${index}`, type: 'welcome' });
-      });
-    }
-
-    // 2. Backfill with root array photos so the screen is always full of your beautiful assets
-    if (rootDocumentPhotos.length > 0) {
-      rootDocumentPhotos.forEach((url, index) => {
         combined.push({
-          id: `root-photo-${index}`,
+          id: `photo-${index}-${item.id}`,
           type: 'photo',
-          rawUrl: url,
-          photo: { message_text: 'Cherished wedding memory...', sender_name: 'Marcus & Danielle' }
+          photo: item.photo
         });
-        poolIndex++;
-        if (poolIndex % 4 === 0) combined.push({ id: `welcome-loop-r-${index}`, type: 'welcome' });
+
+        if ((index + 1) % 5 === 0) {
+          combined.push({
+            id: `welcome-loop-${index}`,
+            type: 'welcome'
+          });
+        }
       });
     }
 
     return combined;
-  }, [liveGuestUploads, rootDocumentPhotos]);
+  }, [liveGuestUploads]);
 
   useEffect(() => {
     if (timelineItems.length <= 1) return;
