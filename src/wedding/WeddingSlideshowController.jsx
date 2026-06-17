@@ -1,4 +1,3 @@
-// src/wedding/WeddingSlideshowController.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getInputProps, useCurrentFrame, staticFile } from 'remotion';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -13,9 +12,10 @@ const WeddingPhotoPlayer = ({ item, opacity }) => {
   const { fps } = useVideoConfig();
   const frame = useCurrentFrame();
 
-  // Internal local states to anchor the typewriter text safely inside this instance
-  const messageText = item.photo.message_text || 'Cheers to the beautiful couple!';
-  const senderName = item.photo.sender_name || 'Wedding Guest';
+  // Unified fallback layout checking to map various field names instantly
+  const messageText = item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!';
+  const senderName = item.photo.sender_name || item.photo.sender || 'Wedding Guest';
+  const imgUrl = item.photo.imageUrl || item.photo.image_url || '';
 
   // State to hold the progressively typed string text
   const [typedMessage, setTypedMessage] = useState('');
@@ -45,7 +45,7 @@ const WeddingPhotoPlayer = ({ item, opacity }) => {
     return () => clearInterval(typerInterval);
   }, [messageText, fps]);
 
-  if (!item || !item.photo) return null;
+  if (!item || !item.photo || !imgUrl) return null;
 
   return (
     <div 
@@ -65,7 +65,7 @@ const WeddingPhotoPlayer = ({ item, opacity }) => {
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `url(${item.photo.image_url})`,
+          backgroundImage: `url(${imgUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           filter: 'blur(45px) brightness(16%)',
@@ -100,7 +100,7 @@ const WeddingPhotoPlayer = ({ item, opacity }) => {
           boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)'
         }}>
           <img 
-            src={item.photo.image_url} 
+            src={imgUrl} 
             alt="Live Wedding Stream" 
             style={{
               width: '100%',
@@ -209,9 +209,19 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-const MOCK_BASE_COUPLE_PHOTOS = [
-  { image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200', message_text: 'Cheers to the beautiful couple!', sender_name: 'Wedding Guest' },
-  { image_url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200', message_text: 'Wishing you a lifetime of love!', sender_name: 'Wedding Guest' }
+// Beautiful high-end holding deck while waiting for the very first upload on a new wedding channel
+const GET_WEDDING_WAITING_CARD = () => [
+  { 
+    id: 'awaiting-first-upload',
+    photo: {
+      imageUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200', 
+      image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200',
+      message_text: 'Scan the QR code to upload your photos and blessings directly onto this live screen!', 
+      message: 'Scan the QR code to upload your photos and blessings directly onto this live screen!',
+      sender_name: 'Welcome Guests',
+      sender: 'Welcome Guests'
+    }
+  }
 ];
 
 export const WeddingSlideshowController = () => {
@@ -221,7 +231,8 @@ export const WeddingSlideshowController = () => {
   const previousDataHashRef = useRef('');
 
   useEffect(() => {
-    const targetCollectionRef = collection(db, 'events', liveEventId || 'smith-wedding-2026', 'receptionStream');
+    const activeId = liveEventId || 'smith-wedding-2026';
+    const targetCollectionRef = collection(db, 'events', activeId, 'receptionStream');
     const q = query(targetCollectionRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -230,8 +241,11 @@ export const WeddingSlideshowController = () => {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
+        // Skip document if it doesn't contain a valid link to point to
+        if (!data.imageUrl && !data.image_url) return;
+
         updatedPhotos.push({ id: doc.id, photo: data });
-        incomingDataString += `${doc.id}-${data.image_url || ''}-${data.message_text || ''};`;
+        incomingDataString += `${doc.id}-${data.image_url || data.imageUrl || ''}-${data.message_text || data.message || ''};`;
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
@@ -245,16 +259,15 @@ export const WeddingSlideshowController = () => {
     return () => unsubscribe();
   }, [liveEventId]);
 
+  // Formulates raw asset items dynamically without hardcoded fallback array constraints
   const timeline = useMemo(() => {
+    const baseDeck = liveGuestUploads.length > 0 ? liveGuestUploads : GET_WEDDING_WAITING_CARD();
+    
     try {
-      return buildSmartWeddingTimeline(MOCK_BASE_COUPLE_PHOTOS, liveGuestUploads, currentFrame);
+      // Safely fall back if the utility calculations hit an un-initialized state frame block
+      return buildSmartWeddingTimeline(baseDeck.map(i => i.photo), liveGuestUploads, currentFrame);
     } catch (e) {
-      const rawItems = liveGuestUploads.length > 0 ? liveGuestUploads : MOCK_BASE_COUPLE_PHOTOS;
-      const normalizedItems = rawItems.map((item, index) => {
-        if (item.photo) return item;
-        return { id: item.id || `fallback-${index}`, photo: item };
-      });
-      return { items: normalizedItems };
+      return { items: baseDeck };
     }
   }, [liveGuestUploads, currentFrame]);
 
