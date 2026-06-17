@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
+import { QRCodeCanvas } from 'qrcode.react';
 
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
@@ -31,9 +32,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   }, [messageText, item.type, item.id]);
 
   if (item.type === 'welcome') {
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-      `https://slidekast.vercel.app/${liveEventId}`
-    )}&color=0-0-0&bgcolor=ffffff`;
+    const qrCodeTargetUrl = `https://slidekast.vercel.app/${liveEventId}`;
 
     return (
       <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
@@ -47,9 +46,34 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container */}
-        <div style={{ position: 'absolute', left: '37.8%', top: '53.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '272px', height: '272px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '8px', boxShadow: '0 0 40px rgba(215, 180, 106, 0.4)' }}>
-          <img src={qrCodeUrl} alt="Scan QR Code" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
+        {/* QR Code Container - Sized and Centered perfectly behind the Golden Frame Layout Area */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            left: '49.8%', 
+            top: '55.5%', 
+            transform: 'translate(-50%, -50%)', 
+            zIndex: 5, 
+            width: '430px', 
+            height: '430px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            background: '#ffffff', 
+            borderRadius: '12px', 
+            padding: '24px',
+            boxSizing: 'border-box',
+            boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
+          }}
+        >
+          {/* High-fidelity browser Canvas vector QR renderer */}
+          <QRCodeCanvas
+            value={qrCodeTargetUrl}
+            size={380}
+            level="H"
+            bgColor="#ffffff"
+            fgColor="#000000"
+          />
         </div>
 
         {/* Instructions */}
@@ -107,7 +131,6 @@ const db = getFirestore(app);
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [dbStatus, setDbStatus] = useState('Initializing execution...');
   const previousDataHashRef = useRef('');
 
   const liveEventId = useMemo(() => {
@@ -117,19 +140,12 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   }, [passedEventId]);
 
   useEffect(() => {
-    setDbStatus(`Connecting path: events/${liveEventId}/receptionStream...`);
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
     const q = query(targetCollectionRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const updatedPhotos = [];
       let incomingDataString = '';
-
-      if (snapshot.empty) {
-        setDbStatus(`Connected! Stream active. Zero entries uploaded yet.`);
-      } else {
-        setDbStatus(`Connected! Found ${snapshot.size} uploaded entries.`);
-      }
 
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -143,7 +159,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
       }
     }, (error) => {
-      setDbStatus(`Firestore Connection Denied: ${error.message}`);
+      console.error("Firestore sync tracking offline", error);
     });
 
     return () => unsubscribe();
@@ -185,12 +201,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const activeItem = timelineItems[currentSlideIndex] || timelineItems[0];
 
   return (
-    // Forced fixed viewpoint sizing container to burst out of 0px parent tags
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'visible', backgroundColor: '#000', zIndex: 999 }}>
-      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 99999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)' }}>
-        ⚙️ SYSTEM CORE TRACE: {dbStatus}
-      </div>
-
       {activeItem && (
         <WeddingPhotoPlayer 
           key={activeItem.id} 
