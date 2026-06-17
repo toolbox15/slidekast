@@ -182,18 +182,20 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-export const WeddingSlideshowController = () => {
+export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const remotionProps = getInputProps();
   const currentFrame = useCurrentFrame();
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [dbStatus, setDbStatus] = useState('Initializing pipeline...');
   const previousDataHashRef = useRef('');
 
+  // Use the passed React prop layout first, fallback safely if empty
   const liveEventId = useMemo(() => {
+    if (passedEventId) return passedEventId;
     if (remotionProps && remotionProps.liveEventId) return remotionProps.liveEventId;
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
     return pathSegments[0] || 'smith-wedding-2026';
-  }, [remotionProps]);
+  }, [remotionProps, passedEventId]);
 
   useEffect(() => {
     setDbStatus(`Connecting path: events/${liveEventId}/receptionStream...`);
@@ -207,7 +209,7 @@ export const WeddingSlideshowController = () => {
       if (snapshot.empty) {
         setDbStatus(`Connected! Stream active but channel folder is completely empty.`);
       } else {
-        setDbStatus(`Connected! Active document pool found.`);
+        setDbStatus(`Connected! Active document pool found with ${snapshot.size} entries.`);
       }
 
       snapshot.forEach((doc) => {
@@ -236,7 +238,7 @@ export const WeddingSlideshowController = () => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
-      {/* Visual Diagnostic Tracker */}
+      {/* Visual Diagnostic Tracker - Set above the maps array layer to ensure rendering availability */}
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)', letterSpacing: '0.5px' }}>
         ⚙️ SYSTEM CORE TRACE: {dbStatus}
       </div>
