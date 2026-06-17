@@ -30,14 +30,13 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
-  // Render Welcome Interstitial
   if (item.type === 'welcome') {
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
     )}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12', overflow: 'hidden', zIndex: 10 }}>
+      <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#0c0f12', overflow: 'visible', zIndex: 999 }}>
         <video
           ref={videoRef}
           src="/Wedding1/welcome-bg.mp4"
@@ -69,7 +68,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   if (!imgUrl) return null;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'visible', zIndex: 999 }}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       
       <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
@@ -150,7 +149,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => unsubscribe();
   }, [liveEventId]);
 
-  // 🛠️ IN-LINE TIMELINE COMPILER (No external utility functions)
   const timelineItems = useMemo(() => {
     let combined = [{ id: 'welcome-initial', type: 'welcome' }];
 
@@ -162,7 +160,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
           photo: item.photo
         });
 
-        // Inject welcome slide after every 5 guest photos
         if ((index + 1) % 5 === 0) {
           combined.push({
             id: `welcome-loop-${index}`,
@@ -175,7 +172,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return combined;
   }, [liveGuestUploads]);
 
-  // Auto-advance loop ticker
   useEffect(() => {
     if (timelineItems.length <= 1) return;
 
@@ -189,9 +185,9 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const activeItem = timelineItems[currentSlideIndex] || timelineItems[0];
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
-      {/* Absolute diagnostic tracker box */}
-      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 9999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)' }}>
+    // Forced fixed viewpoint sizing container to burst out of 0px parent tags
+    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'visible', backgroundColor: '#000', zIndex: 999 }}>
+      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 99999, background: 'rgba(0,0,0,0.9)', color: '#d9bf8d', padding: '12px 18px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid rgba(217,191,141,0.4)' }}>
         ⚙️ SYSTEM CORE TRACE: {dbStatus}
       </div>
 
