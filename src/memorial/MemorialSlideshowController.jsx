@@ -142,7 +142,6 @@ const SectionTitleCard = ({ section, frame, opacity, isMobile = false }) => {
 const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = false }) => {
   const [isHorizontal, setIsHorizontal] = useState(true);
 
-  // Dynamic aspect-ratio check on layout load
   useEffect(() => {
     if (isMobile && item?.photo?.image_url) {
       const img = new Image();
@@ -155,7 +154,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
 
   if (isMobile) {
     if (isHorizontal) {
-      // 1. Horizontal / Widescreen Layout: Text forced straight to the bottom
       return (
         <div 
           style={{ 
@@ -199,7 +197,6 @@ const SectionPhotoPlayer = ({ item, slideFrame, opacity, isEntering, isMobile = 
         </div>
       );
     } else {
-      // 2. Vertical / Portrait Layout: Keeps text anchored on the side safely
       return (
         <div 
           style={{ 
@@ -704,6 +701,7 @@ export const MemorialSlideshowController = ({
     return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
+  // 📡 DYNAMIC EXPRESS LANE CONNECTION FIX: Automatically handles subcollections
   const { tributes } = useLiveTributes(liveEventId);
   const lowerThirdUploads = useMemo(
     () => (tributes.length > 0 ? tributes : liveTributesSeed).map((upload, index) => normalizeUpload(upload, index)),
@@ -774,7 +772,6 @@ export const MemorialSlideshowController = ({
           borderBottom: isMobile ? '1px solid #2c3540' : 'none'
         }}
       >
-        {/* FIXED CONDITIONAL ROUTING LOOP: Separates title views from photo layouts */}
         {visibleItems.map(({ item, frame: itemFrame, opacity, isEntering }) => {
           if (item.type === 'title') {
             return (
@@ -815,7 +812,7 @@ export const MemorialSlideshowController = ({
         />
       )}
 
-      {/* FLOATING ACTION BRANDING: Locked to a clean, crisp 100% Solid Opacity badge shape */}
+      {/* FLOATING ACTION BRANDING */}
       {isMobile && (
         <a 
           href="https://slidekast.com" 
