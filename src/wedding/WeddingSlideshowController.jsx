@@ -9,27 +9,33 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   const videoRef = useRef(null);
   const [typedMessage, setTypedMessage] = useState('');
 
-  const messageText = item.photo?.message_text || item.photo?.message || 'Cheers to the beautiful couple!';
-  const senderName = item.photo?.sender_name || item.photo?.sender || 'Wedding Guest';
-  const imgUrl = item.photo?.imageUrl || item.photo?.image_url || item.photo?.url || item.photo?.downloadURL || '';
+  // Extract variables with absolute deep safety fallbacks
+  const currentPhoto = item?.photo || {};
+  const messageText = currentPhoto.message_text || currentPhoto.message || 'Cheers to the beautiful couple!';
+  const senderName = currentPhoto.sender_name || currentPhoto.sender || 'Wedding Guest';
+  const imgUrl = currentPhoto.imageUrl || currentPhoto.image_url || currentPhoto.url || currentPhoto.downloadURL || '';
 
+  // 🧼 SAFE TYPEWRITER EFFECT
   useEffect(() => {
-    if (item.type !== 'photo') return;
+    if (item.type !== 'photo' || !messageText) return;
+    
     let charIndex = 0;
     setTypedMessage('');
+    const cleanMessage = String(messageText);
 
     const typerInterval = setInterval(() => {
-      if (charIndex <= messageText.length) {
-        setTypedMessage(messageText.slice(0, charIndex));
+      if (charIndex <= cleanMessage.length) {
+        setTypedMessage(cleanMessage.substring(0, charIndex));
         charIndex++;
       } else {
         clearInterval(typerInterval);
       }
-    }, 40);
+    }, 35); // Smooth, steady typing rhythm
 
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
+  // Render Welcome Interstitial View
   if (item.type === 'welcome') {
     const qrCodeTargetUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
@@ -47,7 +53,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container */}
+        {/* QR Code Frame Container */}
         <div 
           style={{ 
             position: 'absolute', 
@@ -74,7 +80,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           />
         </div>
 
-        {/* Instructions Container */}
+        {/* Instructions Panel */}
         <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
             <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
@@ -87,25 +93,40 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
     );
   }
 
+  // Standard Photo View Render Block
   if (!imgUrl) return null;
 
   return (
     <div style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'visible', zIndex: 999 }}>
+      {/* Blurred Background Panel */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       
+      {/* Left Photo Stage Area */}
       <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
-          <img src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img 
+            src={imgUrl} 
+            alt="Live Stream Display Layout" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} 
+            onError={(e) => {
+              console.error("Image loading failed:", imgUrl);
+              // Fallback placeholder image configuration if cloud tokens cache out
+              e.target.src = "https://images.unsplash.com/photo-1519741497674-611481863552?w=800";
+            }}
+          />
         </div>
       </div>
 
+      {/* Right Sidebar Text Segment */}
       <div style={{ width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
+          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile Layout" />
         </div>
         <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)' }}>{senderName}</span>
-        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)' }}>{typedMessage ? `"${typedMessage}"` : ""}</p>
+        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)' }}>
+          {typedMessage ? `"${typedMessage}"` : ""}
+        </p>
       </div>
     </div>
   );
@@ -147,9 +168,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        
-        // 📡 COMPREHENSIVE LINK PARSER
-        // Extracts the image path whether the database field is named imageUrl, image_url, url, or downloadURL
         const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
         if (!targetUrl) return;
         
@@ -179,6 +197,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
           photo: item.photo
         });
 
+        // Add welcome layout screen transition break after every 5 pictures
         if ((index + 1) % 5 === 0) {
           combined.push({
             id: `welcome-loop-${index}`,
@@ -196,7 +215,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timelineItems.length);
-    }, 6000);
+    }, 7000); // Rotates presentation views cleanly every 7 seconds
 
     return () => clearInterval(interval);
   }, [timelineItems]);
