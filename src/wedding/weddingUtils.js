@@ -1,22 +1,25 @@
-// src/wedding/weddingUtils.js
-
 export const PHOTO_SLIDE_FRAMES = 150; // Each photo plays for ~5 seconds at 30fps
 export const TRANSITION_FRAMES = 30;   // Crossfade duration (~1 second)
 
 /**
- * Builds an active playback timeline that injects new live uploads immediately next-in-line.
- * @param {Array} basePhotos - Pre-loaded background/engagement photos of the couple.
- * @param {Array} liveUploads - Real-time uploads streaming from the wedding guests via Firestore.
+ * Builds an active playback timeline optimized for pure real-time crowd streaming.
+ * @param {Array} basePhotos - Combined fallback deck.
+ * @param {Array} liveUploads - Real-time guest entries tracking from Firestore.
  * @param {number} currentFrame - The active frame tick of the live player loop.
  */
 export const buildSmartWeddingTimeline = (basePhotos, liveUploads, currentFrame) => {
   let timeline = [];
   let cursor = 0;
 
-  // 1. Build the foundational loop out of the pre-loaded base couple photos
-  const baseItems = basePhotos.map((photo, index) => {
+  // 1. Prioritize live guest content. If none exists yet, fall back to the base welcoming slide cards.
+  const rawPhotos = liveUploads && liveUploads.length > 0 
+    ? liveUploads.map(item => item.photo || item) 
+    : basePhotos;
+
+  // 2. Build items map with frame thresholds
+  const items = rawPhotos.map((photo, index) => {
     const item = {
-      id: photo.id || `base-${index}`,
+      id: photo.id || `slide-${index}-${photo.createdAt || 'static'}`,
       type: 'photo',
       photo: photo,
       duration: PHOTO_SLIDE_FRAMES,
@@ -27,45 +30,25 @@ export const buildSmartWeddingTimeline = (basePhotos, liveUploads, currentFrame)
     return item;
   });
 
-  if (!liveUploads || liveUploads.length === 0) {
-    return { items: baseItems, totalDuration: cursor };
-  }
+  // 3. 🔄 THE SEAMLESS RECYCLER: Prevents timeline expiration freeze-outs!
+  // If the absolute player clock climbs past the deck threshold, wrap it back cleanly.
+  if (currentFrame >= cursor && cursor > 0) {
+    const loopOffset = Math.floor(currentFrame / cursor) * cursor;
+    const adjustedItems = items.map(item => ({
+      ...item,
+      start: item.start + loopOffset,
+      end: item.end + loopOffset
+    }));
 
-  // 2. Locate which base slide is actively displaying on screen right now
-  const activeIndex = baseItems.findIndex(
-    (item) => currentFrame >= item.start && currentFrame < item.end
-  );
-  const safeActiveIndex = activeIndex === -1 ? 0 : activeIndex;
-  const injectionIndex = safeActiveIndex + 1;
-
-  // 3. Inject the live guest uploads right after the active slide
-  let updatedItems = [...baseItems];
-  let liveCursor = updatedItems[safeActiveIndex].end;
-
-  liveUploads.forEach((upload, offset) => {
-    const targetSlot = injectionIndex + offset;
-    const newItem = {
-      id: upload.id || `live-guest-${Date.now()}-${offset}`,
-      type: 'photo',
-      photo: upload, // Holds image_url, sender_name, message_text, avatar_url
-      duration: PHOTO_SLIDE_FRAMES,
-      start: liveCursor,
-      end: liveCursor + PHOTO_SLIDE_FRAMES
+    return {
+      items: adjustedItems,
+      totalDuration: cursor
     };
-    updatedItems.splice(targetSlot, 0, newItem);
-    liveCursor += PHOTO_SLIDE_FRAMES;
-  });
-
-  // 4. Shift the start and end frame times of all remaining base photos down the line
-  for (let i = injectionIndex + liveUploads.length; i < updatedItems.length; i++) {
-    updatedItems[i].start = liveCursor;
-    updatedItems[i].end = liveCursor + updatedItems[i].duration;
-    liveCursor += updatedItems[i].duration;
   }
 
   return {
-    items: updatedItems,
-    totalDuration: liveCursor
+    items,
+    totalDuration: cursor
   };
 };
 
