@@ -31,7 +31,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   }, [messageText, item.type, item.id]);
 
   if (item.type === 'welcome') {
-    // Generates a high-resolution, perfectly clean vector QR code background image dynamically
     const qrCodeTargetUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
       `https://slidekast.vercel.app/${liveEventId}`
     )}&color=0-0-0&bgcolor=ffffff`;
@@ -48,22 +47,22 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
         />
 
-        {/* QR Code Container - Perfectly Centered and Filled inside the Golden Frame */}
+        {/* QR Code Container - Realigned to 30.8% Left to sit exactly inside the gold rectangle frame */}
         <div 
           style={{ 
             position: 'absolute', 
-            left: '49.8%', 
+            left: '30.8%',  // 👈 Shipped back left to match the frame center
             top: '55.5%', 
             transform: 'translate(-50%, -50%)', 
             zIndex: 5, 
-            width: '430px', 
-            height: '430px', 
+            width: '340px',  // 👈 Adjusted scale to perfectly fit inside the inner borders
+            height: '340px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
             background: '#ffffff', 
             borderRadius: '12px', 
-            padding: '24px',
+            padding: '20px',
             boxSizing: 'border-box',
             boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
           }}
@@ -75,7 +74,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
           />
         </div>
 
-        {/* Instructions */}
+        {/* Instructions Container */}
         <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
             <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
