@@ -3,20 +3,18 @@ import ReactDOM from 'react-dom/client';
 import GuestUploadForm from './GuestUploadForm';
 import { MemorialAdminDashboard } from './memorial/MemorialAdminDashboard';
 import { FuneralSlideshow } from './FuneralSlideshow';
+import { WeddingSlideshowController } from './wedding/WeddingSlideshowController';
 import { db } from './firebaseConfig'; 
 import { doc, onSnapshot } from 'firebase/firestore';
 
 const MainApp = () => {
-  // 1. Parse the URL path to extract the dynamic Event ID and view page
   const pathSegments = window.location.pathname.split('/').filter(Boolean);
-  const eventId = pathSegments[0] || 'default-event';
+  const eventId = pathSegments[0] || 'smith-wedding-2026';
 
-  // ⚡ SAFETY CHECK FALLBACK: Read URL search query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const viewParam = urlParams.get('view');
   const compositionParam = urlParams.get('composition');
 
-  // 📡 ROUTING SWITCH: True if path has /display OR if url contains backup parameter flags
   const isDisplayPage = 
     pathSegments[1] === 'display' || 
     viewParam === 'display' || 
@@ -26,24 +24,19 @@ const MainApp = () => {
     pathSegments[1] === 'admin' || 
     viewParam === 'admin';
 
-  // 2. Set initial authorization and photo state
+  // 📡 THE ABSOLUTE ROUTE FILTER
+  // Explicitly forces wedding layouts if the URL path contains 'wedding'
+  const isWeddingTheme = eventId.toLowerCase().includes('wedding');
+
   const [eventStatus, setEventStatus] = useState({ loading: true, active: true, error: false });
-  
-  // State to hold the arrays pulled from Firestore
   const [eventPhotos, setEventPhotos] = useState({
     earlyYearsPhotos: [],
     familyPhotos: [],
     legacyPhotos: []
   });
 
-  // 3. Real-Time Security Guard Check & Data Fetch
   useEffect(() => {
-    // 🧹 STATE RESET FIX: Clear old photos instantly whenever the eventId changes
-    setEventPhotos({
-      earlyYearsPhotos: [],
-      familyPhotos: [],
-      legacyPhotos: []
-    });
+    setEventPhotos({ earlyYearsPhotos: [], familyPhotos: [], legacyPhotos: [] });
 
     if (eventId === 'default-event') {
       setEventStatus({ loading: false, active: true, error: false });
@@ -51,14 +44,12 @@ const MainApp = () => {
     }
 
     const docRef = doc(db, 'events', eventId);
-
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const now = new Date();
         const expirationDate = data.expiresAt ? new Date(data.expiresAt) : null;
         
-        // GRAB THE PHOTOS FROM FIRESTORE AND SAVE THEM TO STATE
         setEventPhotos({
           earlyYearsPhotos: data.earlyYearsPhotos || [],
           familyPhotos: data.familyPhotos || [],
@@ -84,7 +75,7 @@ const MainApp = () => {
   if (eventStatus.loading) {
     return (
       <div style={{ background: '#101417', color: '#d9bf8d', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', letterSpacing: '1px' }}>
-        SECURING CONNECTION...
+        LOADING DATA SYSTEM...
       </div>
     );
   }
@@ -92,34 +83,33 @@ const MainApp = () => {
   if (!eventStatus.active) {
     return (
       <div style={{ background: '#101417', color: '#f8fafc', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', padding: '20px', textAlign: 'center' }}>
-        <div style={{ maxWidth: '450px', background: '#182325', border: '1px solid #d9bf8d', padding: '40px', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-          <h2 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', marginTop: 0, fontSize: '28px', fontWeight: '400' }}>Presentation Concluded</h2>
-          <div style={{ width: '60px', height: '2px', background: '#d9bf8d', margin: '20px auto' }} />
-          <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', fontSize: '15px', marginBottom: '0' }}>
-            The pilot window for this event directory has closed. To reactivate this live display loop, update licensing metrics, or export your gallery media logs, please contact your account representative.
-          </p>
-          <div style={{ marginTop: '35px', fontSize: '12px', color: '#d9bf8d', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>
-            SlideKast Digital Signage
-          </div>
+        <div style={{ maxWidth: '450px', background: '#182325', border: '1px solid #d9bf8d', padding: '40px', borderRadius: '8px' }}>
+          <h2 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', marginTop: 0 }}>Presentation Concluded</h2>
+          <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>The loop window is closed.</p>
         </div>
       </div>
     );
   }
 
-  // 4. Secure Dynamic Routing execution if parameters clear validation
   return (
     <div style={{ minHeight: '100vh', width: '100vw', margin: 0, padding: 0, background: '#101417', color: '#f8fafc' }}>
       {isDisplayPage ? (
-        // PASS THE FIRESTORE DATA DOWN AS PROPS TO LIVE LOOP DISPLAY
-        <FuneralSlideshow 
-          eventId={eventId} 
-          liveEventId={eventId} 
-          earlyYearsPhotos={eventPhotos.earlyYearsPhotos}
-          familyPhotos={eventPhotos.familyPhotos}
-          legacyPhotos={eventPhotos.legacyPhotos}
-        />
+        isWeddingTheme ? (
+          // 🚀 FORCE ROUTE: Send wedding URLs straight to the brand new wedding controller file!
+          <WeddingSlideshowController 
+            liveEventId={eventId}
+          />
+        ) : (
+          // Otherwise, send directly to the memorial slideshow
+          <FuneralSlideshow 
+            eventId={eventId} 
+            liveEventId={eventId} 
+            earlyYearsPhotos={eventPhotos.earlyYearsPhotos}
+            familyPhotos={eventPhotos.familyPhotos}
+            legacyPhotos={eventPhotos.legacyPhotos}
+          />
+        )
       ) : isAdminPage ? (
-        // RENDER THE NEW ADVANCED DASHBOARD GUI GRAPHICAL CONTROLLER
         <MemorialAdminDashboard 
           eventId={eventId} 
           initialEarlyYears={eventPhotos.earlyYearsPhotos}
