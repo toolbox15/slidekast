@@ -11,15 +11,22 @@ const slideshowStyles = `
     50% { transform: scale(1.08) translate(-10px, -5px); }
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  
+  /* 🎬 FADE OUT TO BLACK TRANSITION MATRIX */
+  @keyframes fadeOutIn {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
   }
+  
   .animate-kenburns {
     animation: kenburns 24s ease-in-out infinite;
   }
-  .animate-fade {
-    animation: fadeIn 0.8s ease-in-out forwards;
+  
+  /* Applies a beautiful 8.5s total life cycle that gracefully dissolves out */
+  .animate-fade-sequence {
+    animation: fadeOutIn 8.5s ease-in-out forwards;
   }
 
   /* 🖥️ WIDESCREEN SMART TV/PROJECTOR DISPLAY LAYOUT */
@@ -55,7 +62,7 @@ const slideshowStyles = `
     box-sizing: border-box;
   }
 
-  /* 📱 MOBILE GALLERY TIMELINE OVERRIDES (Screen widths under 768px) */
+  /* 📱 MOBILE GALLERY TIMELINE OVERRIDES */
   @media (max-width: 768px) {
     .tv-display-mode {
       display: none !important;
@@ -257,8 +264,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div className="animate-fade tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
-        {/* 🎬 LOOP OPTIMIZATION: added preload="auto" to completely eliminate initialization hesitation gap */}
+      <div className="animate-fade-sequence tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#000000' }}>
         <video 
           src="/Wedding1/welcome-bg.mp4" 
           autoPlay 
@@ -284,7 +290,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   if (!imgUrl) return null;
 
   return (
-    <div className="animate-fade tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
+    <div className="animate-fade-sequence tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#000000' }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
@@ -296,7 +302,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
       <div className="tv-sidebar-stage" style={{ zIndex: 5, textAlign: 'center' }}>
         <HeartBurstCanvas triggerToggle={burstTrigger} />
 
-        {/* 📐 ORNAMENT SHIFT UP BY 5px (Margin-top altered from 2px down to -3px) */}
         <img 
           src="/Wedding1/gold-divider.png" 
           alt="" 
@@ -424,8 +429,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     if (widescreenTimelineItems.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % widescreenTimelineItems.length);
-    }, 8500);
-    return () => clearInterval(interval);
+    }, 8500); // 8.5 seconds interval perfectly matches the animation loop timeline bounds
   }, [widescreenTimelineItems]);
 
   const activeItem = widescreenTimelineItems[currentSlideIndex] || widescreenTimelineItems[0];
@@ -434,10 +438,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ TV DISPLAY INTERFACE VIEWPORT */}
+      {/* 🖥️ TV VIEWPORT VIEW */}
       {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 MOBILE FEED INSTANT STREAM VIEWPORT */}
+      {/* 📱 MOBILE INSTANT TIMELINE FEED */}
       <div className="mobile-gallery-mode" style={{ display: 'none' }}>
         <header className="mobile-header-banner">
           <h1 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', margin: '0 0 8px 0', fontSize: '2rem' }}>Welcome Friends & Family</h1>
