@@ -12,21 +12,19 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* 🎬 FADE OUT TO BLACK TRANSITION MATRIX */
-  @keyframes fadeOutIn {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
+  /* ✨ BUTTERY SMOOTH SOFT CROSSFADE MATRIX */
+  @keyframes softFadeIn {
+    from { opacity: 0; filter: blur(4px); }
+    to { opacity: 1; filter: blur(0px); }
   }
   
   .animate-kenburns {
     animation: kenburns 24s ease-in-out infinite;
   }
   
-  /* Applies a beautiful 8.5s total life cycle that gracefully dissolves out */
-  .animate-fade-sequence {
-    animation: fadeOutIn 8.5s ease-in-out forwards;
+  /* A gentle, elegant 1.5-second blending dissolve */
+  .animate-soft-dissolve {
+    animation: softFadeIn 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   /* 🖥️ WIDESCREEN SMART TV/PROJECTOR DISPLAY LAYOUT */
@@ -264,7 +262,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div className="animate-fade-sequence tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#000000' }}>
+      <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
         <video 
           src="/Wedding1/welcome-bg.mp4" 
           autoPlay 
@@ -290,7 +288,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   if (!imgUrl) return null;
 
   return (
-    <div className="animate-fade-sequence tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#000000' }}>
+    <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
@@ -429,7 +427,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     if (widescreenTimelineItems.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % widescreenTimelineItems.length);
-    }, 8500); // 8.5 seconds interval perfectly matches the animation loop timeline bounds
+    }, 8500);
+    return () => clearInterval(interval);
   }, [widescreenTimelineItems]);
 
   const activeItem = widescreenTimelineItems[currentSlideIndex] || widescreenTimelineItems[0];
@@ -438,7 +437,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ TV VIEWPORT VIEW */}
+      {/* 🖥️ TV DISPLAY INTERFACE */}
       {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
       {/* 📱 MOBILE INSTANT TIMELINE FEED */}
