@@ -3,12 +3,12 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 
 // ==========================================
-// CINEMATIC STYLES (Ken Burns + Crossfade)
+// 📱 FULLY RESPONSIVE CINEMATIC STYLES
 // ==========================================
 const slideshowStyles = `
   @keyframes kenburns {
     0% { transform: scale(1.0) translate(0px, 0px); }
-    50% { transform: scale(1.06) translate(-6px, -3px); }
+    50% { transform: scale(1.08) translate(-10px, -5px); }
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   @keyframes fadeIn {
@@ -16,15 +16,81 @@ const slideshowStyles = `
     to { opacity: 1; }
   }
   .animate-kenburns {
-    animation: kenburns 28s ease-in-out infinite;
+    animation: kenburns 24s ease-in-out infinite;
   }
   .animate-fade {
-    animation: fadeIn 2.5s ease-in-out forwards;
+    animation: fadeIn 1.2s ease-in-out forwards;
+  }
+
+  /* 💫 RESPONSIVE GRID MATRIX OVERRIDES */
+  .display-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+  }
+  .photo-stage {
+    width: 65%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 30px;
+    box-sizing: border-box;
+  }
+  .sidebar-stage {
+    width: 35%;
+    height: 100%;
+    background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))';
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 35px 40px 35px;
+    box-sizing: border-box;
+  }
+  .guest-name-text {
+    font-size: 3.0rem;
+  }
+  .guest-message-text {
+    font-size: 2.8rem;
+  }
+
+  /* 📱 MOBILE VERTICAL VIEW OVERRIDES (Under 768px width) */
+  @media (max-width: 768px) {
+    .display-container {
+      flex-direction: column !important;
+      overflow-y: auto !important;
+    }
+    .photo-stage {
+      width: 100% !important;
+      height: 55vh !important;
+      padding: 15px !important;
+    }
+    .sidebar-stage {
+      width: 100% !important;
+      height: 45vh !important;
+      border-left: none !important;
+      border-top: 4px solid rgba(217, 191, 141, 0.5) !important;
+      padding: 20px 20px 40px 20px !important;
+    }
+    .guest-name-text {
+      font-size: 1.8rem !important;
+      margin-bottom: 12px !important;
+    }
+    .guest-message-text {
+      font-size: 1.5rem !important;
+    }
+    .sidebar-stage img[src*="gold-divider"] {
+      margin-bottom: 20px !important;
+    }
   }
 `;
 
 // ==========================================
-// ❤️ ROOT-LEVEL GLOBAL HEART EMITTER
+// ❤️ DESIGN-ANCHORED HEART EMITTER
 // ==========================================
 const HeartBurstCanvas = ({ triggerToggle }) => {
   const canvasRef = useRef(null);
@@ -36,32 +102,27 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Lock it directly to full browser window dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
 
     let particles = [];
     const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d', '#ffb3c1'];
 
-    // 🎯 SCREEN-GLOBAL COORDINATES: 
-    // Sidebar takes up the right 35% of the screen. 
-    // Midpoint of that column is at 82.5% of total window width.
-    // The sender name rests roughly 28% down from the top.
-    const originX = window.innerWidth * 0.825;
-    const originY = window.innerHeight * 0.28; 
+    const originX = canvas.width / 2;
+    const originY = canvas.height * 0.28; 
 
-    // Generate 50 active burst heart elements
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 45; i++) {
       particles.push({
-        x: originX + (Math.random() - 0.5) * 50,
+        x: originX + (Math.random() - 0.5) * 60,
         y: originY,
-        size: Math.random() * 12 + 8,
-        speedX: (Math.random() - 0.5) * 7, // Wider dispersion vector
-        speedY: -Math.random() * 6 - 3,    // Floating upward trajectory
+        size: Math.random() * 14 + 8,
+        speedX: (Math.random() - 0.5) * 6,
+        speedY: -Math.random() * 5 - 3,
         color: colors[Math.floor(Math.random() * colors.length)],
         opacity: 1,
         rotation: Math.random() * Math.PI,
-        rotationSpeed: (Math.random() - 0.5) * 0.06
+        rotationSpeed: (Math.random() - 0.5) * 0.05
       });
     }
 
@@ -90,7 +151,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
         alive = true;
         p.x += p.speedX;
         p.y += p.speedY;
-        p.opacity -= 0.014; // Snappy evaporation look
+        p.opacity -= 0.012;
         p.rotation += p.rotationSpeed;
 
         ctx.save();
@@ -118,12 +179,12 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     <canvas 
       ref={canvasRef} 
       style={{ 
-        position: 'fixed', 
+        position: 'absolute', 
         inset: 0, 
-        width: '100vw', 
-        height: '100vh', 
+        width: '100%', 
+        height: '100%', 
         pointerEvents: 'none', 
-        zIndex: 99999, // Brings it on top of all image slides and sidebar blocks
+        zIndex: 2,
         backgroundColor: 'transparent'
       }} 
     />
@@ -133,7 +194,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId }) => {
+const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   const videoRef = useRef(null);
   const [typedMessage, setTypedMessage] = useState('');
 
@@ -156,7 +217,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
       } else {
         clearInterval(typerInterval);
       }
-    }, 45);
+    }, 35);
 
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
@@ -181,30 +242,31 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
         <div 
           style={{ 
             position: 'absolute', 
-            left: '30.8%', 
-            top: '55.5%', 
+            left: '50%', 
+            top: '40%', 
             transform: 'translate(-50%, -50%)', 
             zIndex: 5, 
-            width: '340px', 
-            height: '340px', 
+            width: '280px', 
+            height: '280px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
             background: '#ffffff', 
             borderRadius: '12px', 
-            padding: '20px',
+            padding: '15px',
             boxSizing: 'border-box',
             boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
           }}
+          className="mobile-qr-fix"
         >
           <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
 
-        <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', items: 'center', textAlign: 'center' }}>
-          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
-            <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
-            <p style={{ color: '#ffffff', fontSize: '2.4rem', fontStyle: 'italic', margin: 0 }}>
-              Scan the QR Code to share your photos and blessings directly to this live screen!
+        <div style={{ position: 'absolute', left: '5%', bottom: '8%', width: '90%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '2.0rem', lineHeight: '1.3', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
+            <p style={{ margin: '0 0 10px 0' }}>Welcome Friends & Family</p>
+            <p style={{ color: '#ffffff', fontSize: '1.4rem', fontStyle: 'italic', margin: 0 }}>
+              Scan to share photos live!
             </p>
           </div>
         </div>
@@ -215,7 +277,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   if (!imgUrl) return null;
 
   return (
-    <div className="animate-fade" style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000000', overflow: 'hidden', zIndex: 999 }}>
+    <div className="animate-fade display-container" style={{ position: 'absolute', inset: 0, backgroundColor: '#000000', overflow: 'hidden', zIndex: 999 }}>
       <style>{slideshowStyles}</style>
       
       <div 
@@ -223,7 +285,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
         style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} 
       />
       
-      <div style={{ width: '65%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, padding: '40px 30px', boxSizing: 'border-box' }}>
+      {/* Dynamic Responsive Photo Wrapper */}
+      <div className="photo-stage" style={{ zIndex: 2 }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
           <img 
             className="animate-kenburns"
@@ -237,17 +300,21 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
         </div>
       </div>
 
-      <div style={{ position: 'relative', width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
-        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', zIndex: 3 }}>
-          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
+      {/* Dynamic Responsive Sidebar Column */}
+      <div className="sidebar-stage" style={{ background: 'linear-gradient(to bottom, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', zIndex: 5, textAlign: 'center' }}>
+        
+        <HeartBurstCanvas triggerToggle={burstTrigger} />
+
+        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: '100%', maxSizing: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', zIndex: 3 }}>
+          <img src="/Wedding1/couple-profile.png" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
         </div>
         
-        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 3 }}>
+        <span className="guest-name-text" style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontWeight: 'bold', display: 'block', letterSpacing: '1px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 3, marginBottom: '15px' }}>
           {senderName}
         </span>
         
-        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 3 }}>
+        <p className="guest-message-text" style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 3 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
       </div>
@@ -301,7 +368,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
-        // 🔥 TRIGGER CONTROL: Fires purely when new items are added to the list after boot
         if (!isInitialLoadRef.current && updatedPhotos.length > liveGuestUploads.length) {
           setBurstTrigger((prev) => prev + 1);
         }
@@ -351,7 +417,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timelineItems.length);
-    }, 12000);
+    }, 8500);
 
     return () => clearInterval(interval);
   }, [timelineItems]);
@@ -360,14 +426,12 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000', zIndex: 999 }}>
-      {/* 🌟 FIXED POSITION: Layered globally at the root stack so elements can never clip it */}
-      <HeartBurstCanvas triggerToggle={burstTrigger} />
-      
       {activeItem && (
         <WeddingPhotoPlayer 
           key={activeItem.id} 
           item={activeItem} 
           liveEventId={liveEventId}
+          burstTrigger={burstTrigger}
         />
       )}
     </div>
