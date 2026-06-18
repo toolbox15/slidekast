@@ -45,7 +45,7 @@ const slideshowStyles = `
   .tv-sidebar-stage {
     width: 35%;
     height: 100%;
-    background: linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0));
+    background: linear-gradient(to bottom, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0));
     border-left: 4px solid rgba(217, 191, 141, 0.5);
     display: flex;
     flex-direction: column;
@@ -124,9 +124,112 @@ const slideshowStyles = `
 `;
 
 // ==========================================
+// ❤️ DESIGN-ANCHORED HEART EMITTER
+// ==========================================
+const HeartBurstCanvas = ({ triggerToggle }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (triggerToggle === 0) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    let particles = [];
+    const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d', '#ffb3c1'];
+
+    // 🎯 TEXT FOCUS ANCHOR: Shifts coordinates down lower, centering right behind the Guest Name element
+    const originX = canvas.width / 2;
+    const originY = canvas.height * 0.62; 
+
+    for (let i = 0; i < 45; i++) {
+      particles.push({
+        x: originX + (Math.random() - 0.5) * 80,
+        y: originY,
+        size: Math.random() * 14 + 8,
+        speedX: (Math.random() - 0.5) * 5,
+        speedY: -Math.random() * 6 - 3, // Floating upward
+        color: colors[Math.floor(Math.random() * colors.length)],
+        opacity: 1,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.05
+      });
+    }
+
+    let animationId;
+    
+    function drawHeart(ctx, x, y, size) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size / 4);
+      ctx.quadraticCurveTo(x, y - size / 2, x + size / 2, y - size / 2);
+      ctx.quadraticCurveTo(x + size, y - size / 2, x + size, y + size / 4);
+      ctx.quadraticCurveTo(x + size, y + size * 0.75, x, y + size * 1.2);
+      ctx.quadraticCurveTo(x - size, y + size * 0.75, x - size, y + size / 4);
+      ctx.quadraticCurveTo(x - size, y - size / 2, x, y - size / 2);
+      ctx.quadraticCurveTo(x, y + size / 4, x, y + size / 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+
+      particles.forEach((p) => {
+        if (p.opacity <= 0) return;
+
+        alive = true;
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.opacity -= 0.012;
+        p.rotation += p.rotationSpeed;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        drawHeart(ctx, 0, 0, p.size);
+        ctx.restore();
+      });
+
+      if (alive) {
+        animationId = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    animate();
+    return () => cancelAnimationFrame(animationId);
+  }, [triggerToggle]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        width: '100%', 
+        height: '100%', 
+        pointerEvents: 'none', 
+        zIndex: 2,
+        backgroundColor: 'transparent'
+      }} 
+    />
+  );
+};
+
+// ==========================================
 // 1. UNIFIED DISPLAY COMPONENT
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId }) => {
+const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   const [typedMessage, setTypedMessage] = useState('');
 
   const currentPhoto = item?.photo || {};
@@ -177,18 +280,33 @@ const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   return (
     <div className="animate-fade tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
+      
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
           <img className="animate-kenburns" src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} />
         </div>
       </div>
+
+      {/* 🖥️ RESTRUCTURED TV SIDEBAR HIERARCHY */}
       <div className="tv-sidebar-stage" style={{ zIndex: 5, textAlign: 'center' }}>
-        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95 }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px' }}>
-          <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
+        
+        {/* Particle Overlay canvas layer nested safely inside tree */}
+        <HeartBurstCanvas triggerToggle={burstTrigger} />
+
+        {/* 1. Ornament moved right to the top boundary */}
+        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
+        
+        {/* 2. Bride and Groom Profile Picture up-scaled beautifully for Widescreen TV layouts */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
+          <img src="/Wedding1/couple-profile.png" style={{ width: '180px', height: '180px', borderRadius: '50%', objectFit: 'cover', border: '5px solid #d9bf8d', boxShadow: '0 16px 32px rgba(0,0,0,0.5)' }} alt="Profile" />
         </div>
-        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)' }}>{senderName}</span>
-        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)' }}>
+        
+        {/* 3. Text Stack (Particles set to break directly out behind this Name layer) */}
+        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>
+          {senderName}
+        </span>
+        
+        <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
       </div>
@@ -214,6 +332,9 @@ const db = getFirestore(app);
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [burstTrigger, setBurstTrigger] = useState(0);
+  const previousDataHashRef = useRef('');
+  const isInitialLoadRef = useRef(true);
 
   const liveEventId = useMemo(() => {
     if (passedEventId) return passedEventId;
@@ -227,21 +348,34 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const updatedPhotos = [];
+      let incomingDataString = '';
+
       snapshot.forEach((doc) => {
         const data = doc.data();
         const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
         if (!targetUrl) return;
         updatedPhotos.push({ id: doc.id, photo: data });
+        incomingDataString += `${doc.id}-${targetUrl};`;
       });
-      setLiveGuestUploads(updatedPhotos);
+      
+      if (incomingDataString !== previousDataHashRef.current) {
+        if (!isInitialLoadRef.current && updatedPhotos.length > liveGuestUploads.length) {
+          setBurstTrigger((prev) => prev + 1);
+        }
+        isInitialLoadRef.current = false;
+        previousDataHashRef.current = incomingDataString;
+        setLiveGuestUploads(updatedPhotos);
+        if (updatedPhotos.length > 0) {
+          setCurrentSlideIndex(1); 
+        }
+      }
     }, (error) => {
       console.error("Firestore sync offline", error);
     });
 
     return () => unsubscribe();
-  }, [liveEventId]);
+  }, [liveEventId, liveGuestUploads.length]);
 
-  // Widescreen Slide Rotation Logic
   const widescreenTimelineItems = useMemo(() => {
     let combined = [{ id: 'welcome-initial', type: 'welcome' }];
     if (liveGuestUploads.length > 0) {
@@ -254,7 +388,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return combined;
   }, [liveGuestUploads]);
 
-  // ⚡ STRATEGIC FEED: Newest submissions show right on top of the mobile stack!
   const mobileSortedGallery = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
@@ -277,34 +410,17 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: Renders when screen is wide (Widescreen Signage Link) */}
-      {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} />}
+      {/* 🖥️ TV VIEWPORT INTERFACE LAYER */}
+      {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 VIEWPORT LAYER 2: Renders completely structured scrolling gallery on mobile links */}
+      {/* 📱 MOBILE INSTANT TIMELINE FEED LAYER */}
       <div className="mobile-gallery-mode" style={{ display: 'none' }}>
         <header className="mobile-header-banner">
           <h1 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', margin: '0 0 8px 0', fontSize: '2rem' }}>Welcome Friends & Family</h1>
           <p style={{ color: '#ffffff', fontFamily: 'system-ui', fontSize: '1.05rem', margin: '0 0 20px 0', fontStyle: 'italic', opacity: 0.85 }}>
             Live Guest Gallery Roll
           </p>
-          
-          {/* 🔗 STYLED LINK BUTTON: Pinned directly beneath the header card */}
-          <a 
-            href={`/${liveEventId}`}
-            style={{
-              display: 'inline-block',
-              padding: '12px 30px',
-              backgroundColor: '#d9bf8d',
-              color: '#0c0f12',
-              fontFamily: 'system-ui, sans-serif',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              textDecoration: 'none',
-              borderRadius: '30px',
-              boxShadow: '0 4px 15px rgba(215, 180, 106, 0.4)',
-              transition: 'transform 0.2s ease'
-            }}
-          >
+          <a href={`/${liveEventId}`} style={{ display: 'inline-block', padding: '12px 30px', backgroundColor: '#d9bf8d', color: '#0c0f12', fontFamily: 'system-ui, sans-serif', fontSize: '1.1rem', fontWeight: 'bold', textDecoration: 'none', borderRadius: '30px', boxShadow: '0 4px 15px rgba(215, 180, 106, 0.4)' }}>
             📸 Upload Another Photo
           </a>
         </header>
@@ -323,12 +439,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
                     <img src={url} alt="Guest Upload" className="mobile-card-img" />
                   </div>
                   <div className="mobile-card-content">
-                    <span className="mobile-card-name">
-                      {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
-                    </span>
-                    <p className="mobile-card-text">
-                      "{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"
-                    </p>
+                    <span className="mobile-card-name">{item.photo.sender_name || item.photo.sender || 'Wedding Guest'}</span>
+                    <p className="mobile-card-text">"{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"</p>
                   </div>
                 </article>
               );
