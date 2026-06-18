@@ -19,7 +19,7 @@ const slideshowStyles = `
     animation: kenburns 24s ease-in-out infinite;
   }
   .animate-fade {
-    animation: fadeIn 1.2s ease-in-out forwards;
+    animation: fadeIn 0.8s ease-in-out forwards;
   }
 
   /* 🖥️ WIDESCREEN SMART TV/PROJECTOR DISPLAY LAYOUT */
@@ -142,10 +142,8 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 
     let particles = [];
     const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d', '#ffb3c1'];
-
-    // 🎯 TEXT FOCUS ANCHOR: Shifts coordinates down lower, centering right behind the Guest Name element
     const originX = canvas.width / 2;
-    const originY = canvas.height * 0.72; // Adjusted downward since the bigger picture pushes text slightly down
+    const originY = canvas.height * 0.72; 
 
     for (let i = 0; i < 45; i++) {
       particles.push({
@@ -192,7 +190,6 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.opacity);
         ctx.fillStyle = p.color;
-        
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         drawHeart(ctx, 0, 0, p.size);
@@ -261,8 +258,17 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
 
     return (
       <div className="animate-fade tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
-        <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
-        <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyBox: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
+        {/* 🎬 LOOP OPTIMIZATION: added preload="auto" to completely eliminate initialization hesitation gap */}
+        <video 
+          src="/Wedding1/welcome-bg.mp4" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          preload="auto"
+          style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} 
+        />
+        <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
           <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
@@ -290,10 +296,21 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
       <div className="tv-sidebar-stage" style={{ zIndex: 5, textAlign: 'center' }}>
         <HeartBurstCanvas triggerToggle={burstTrigger} />
 
-        {/* 1. Ornament Banner */}
-        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
+        {/* 📐 ORNAMENT SHIFT UP BY 5px (Margin-top altered from 2px down to -3px) */}
+        <img 
+          src="/Wedding1/gold-divider.png" 
+          alt="" 
+          style={{ 
+            width: 'calc(100% - 4px)', 
+            height: 'auto', 
+            marginTop: '-3px', 
+            marginBottom: '35px', 
+            mixBlendMode: 'screen', 
+            opacity: 0.95, 
+            zIndex: 3 
+          }} 
+        />
         
-        {/* 2. 🚀 TWICE THE SIZE: Profile Picture scaled up to 360px x 360px for premium TV visibility */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
           <img 
             src="/Wedding1/couple-profile.png" 
@@ -309,7 +326,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
           />
         </div>
         
-        {/* 3. Text Stack */}
         <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>
           {senderName}
         </span>
@@ -418,10 +434,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ TV VIEWPORT LAYER */}
+      {/* 🖥️ TV DISPLAY INTERFACE VIEWPORT */}
       {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 MOBILE INSTANT TIMELINE FEED LAYER */}
+      {/* 📱 MOBILE FEED INSTANT STREAM VIEWPORT */}
       <div className="mobile-gallery-mode" style={{ display: 'none' }}>
         <header className="mobile-header-banner">
           <h1 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', margin: '0 0 8px 0', fontSize: '2rem' }}>Welcome Friends & Family</h1>
