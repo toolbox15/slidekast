@@ -3,7 +3,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
 
 // ==========================================
-// CINEMATIC STYLES (Slowing down the Crossfade)
+// CINEMATIC STYLES (Ken Burns + Crossfade)
 // ==========================================
 const slideshowStyles = `
   @keyframes kenburns {
@@ -18,14 +18,13 @@ const slideshowStyles = `
   .animate-kenburns {
     animation: kenburns 28s ease-in-out infinite;
   }
-  /* 🐌 SLOWED DOWN: Crossfade dissolve increased to 2.5 seconds for a soft cinematic look */
   .animate-fade {
     animation: fadeIn 2.5s ease-in-out forwards;
   }
 `;
 
 // ==========================================
-// ❤️ DESIGN-ANCHORED HEART EMITTER
+// ❤️ ROOT-LEVEL GLOBAL HEART EMITTER
 // ==========================================
 const HeartBurstCanvas = ({ triggerToggle }) => {
   const canvasRef = useRef(null);
@@ -37,26 +36,32 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    // Lock it directly to full browser window dimensions
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     let particles = [];
     const colors = ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d', '#ffb3c1'];
-    const originX = canvas.width / 2;
-    const originY = canvas.height * 0.28; 
 
-    for (let i = 0; i < 45; i++) {
+    // 🎯 SCREEN-GLOBAL COORDINATES: 
+    // Sidebar takes up the right 35% of the screen. 
+    // Midpoint of that column is at 82.5% of total window width.
+    // The sender name rests roughly 28% down from the top.
+    const originX = window.innerWidth * 0.825;
+    const originY = window.innerHeight * 0.28; 
+
+    // Generate 50 active burst heart elements
+    for (let i = 0; i < 50; i++) {
       particles.push({
-        x: originX + (Math.random() - 0.5) * 60,
+        x: originX + (Math.random() - 0.5) * 50,
         y: originY,
-        size: Math.random() * 14 + 8,
-        speedX: (Math.random() - 0.5) * 6,
-        speedY: -Math.random() * 5 - 3,  
+        size: Math.random() * 12 + 8,
+        speedX: (Math.random() - 0.5) * 7, // Wider dispersion vector
+        speedY: -Math.random() * 6 - 3,    // Floating upward trajectory
         color: colors[Math.floor(Math.random() * colors.length)],
         opacity: 1,
         rotation: Math.random() * Math.PI,
-        rotationSpeed: (Math.random() - 0.5) * 0.05
+        rotationSpeed: (Math.random() - 0.5) * 0.06
       });
     }
 
@@ -85,7 +90,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
         alive = true;
         p.x += p.speedX;
         p.y += p.speedY;
-        p.opacity -= 0.012; 
+        p.opacity -= 0.014; // Snappy evaporation look
         p.rotation += p.rotationSpeed;
 
         ctx.save();
@@ -113,12 +118,12 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     <canvas 
       ref={canvasRef} 
       style={{ 
-        position: 'absolute', 
+        position: 'fixed', 
         inset: 0, 
-        width: '100%', 
-        height: '100%', 
+        width: '100vw', 
+        height: '100vh', 
         pointerEvents: 'none', 
-        zIndex: 2, 
+        zIndex: 99999, // Brings it on top of all image slides and sidebar blocks
         backgroundColor: 'transparent'
       }} 
     />
@@ -128,7 +133,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 // ==========================================
 // 1. UNIFIED WEDDING DISPLAY PLAYER
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
+const WeddingPhotoPlayer = ({ item, liveEventId }) => {
   const videoRef = useRef(null);
   const [typedMessage, setTypedMessage] = useState('');
 
@@ -151,7 +156,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
       } else {
         clearInterval(typerInterval);
       }
-    }, 45); // Slipped slightly slower typewriter speed to match the longer slide look
+    }, 45);
 
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
@@ -233,9 +238,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
       </div>
 
       <div style={{ position: 'relative', width: '35%', height: '100%', background: 'linear-gradient(to right, rgba(12, 15, 18, 0.98), rgba(6, 8, 10, 1.0))', borderLeft: '4px solid rgba(217, 191, 141, 0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 35px 40px 35px', boxSizing: 'border-box', zIndex: 5, textAlign: 'center' }}>
-        
-        <HeartBurstCanvas triggerToggle={burstTrigger} />
-
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '2px', marginBottom: '50px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', zIndex: 3 }}>
           <img src="/Wedding1/couple-profile.png" style={{ width: '140px', height: '140px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #d9bf8d', boxShadow: '0 12px 24px rgba(0,0,0,0.4)' }} alt="Profile" />
@@ -299,6 +301,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
+        // 🔥 TRIGGER CONTROL: Fires purely when new items are added to the list after boot
         if (!isInitialLoadRef.current && updatedPhotos.length > liveGuestUploads.length) {
           setBurstTrigger((prev) => prev + 1);
         }
@@ -346,8 +349,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   useEffect(() => {
     if (timelineItems.length <= 1) return;
 
-    // 🐌 SLOWED DOWN: Single slide duration bumped up to 12000ms (12 seconds) 
-    // This gives people ample time to read long blessings and take in the photo
     const interval = setInterval(() => {
       setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % timelineItems.length);
     }, 12000);
@@ -359,12 +360,14 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000', zIndex: 999 }}>
+      {/* 🌟 FIXED POSITION: Layered globally at the root stack so elements can never clip it */}
+      <HeartBurstCanvas triggerToggle={burstTrigger} />
+      
       {activeItem && (
         <WeddingPhotoPlayer 
           key={activeItem.id} 
           item={activeItem} 
           liveEventId={liveEventId}
-          burstTrigger={burstTrigger}
         />
       )}
     </div>
