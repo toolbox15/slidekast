@@ -12,7 +12,13 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* 🎬 SYNCED FADE-IN / FADE-OUT SEQUENCE FOR TV & MOBILE */
+  /* 📺 TV EXCLUSIVE: GENTLE OVERLAPPING CROSS DISSOLVE */
+  @keyframes crossDissolve {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* 📱 MOBILE EXCLUSIVE: STRICTOR FADE-IN / FADE-OUT SEQUENCE */
   @keyframes strictFadeInOut {
     0% { opacity: 0; }
     8% { opacity: 1; }
@@ -22,6 +28,11 @@ const slideshowStyles = `
   
   .animate-kenburns {
     animation: kenburns 24s ease-in-out infinite;
+  }
+  
+  /* Blends directly on top of the layout matrix */
+  .animate-cross-dissolve {
+    animation: crossDissolve 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
   
   .animate-fade-io {
@@ -75,7 +86,6 @@ const slideshowStyles = `
       overflow: hidden;
     }
     
-    /* Box 1: Mobile Slideshow Viewport Frame (Top 45%) */
     .mobile-video-frame {
       height: 45vh;
       width: 100%;
@@ -85,7 +95,6 @@ const slideshowStyles = `
       overflow: hidden;
     }
     
-    /* Box 2: Original Dark Slate Action Button Bar with Bold White Text */
     .mobile-action-bar {
       height: 10vh;
       width: 100%;
@@ -111,7 +120,6 @@ const slideshowStyles = `
       justify-content: center;
     }
 
-    /* Box 3: Live Messages Feed (Bottom 45%) */
     .mobile-messages-feed {
       height: 45vh;
       width: 100%;
@@ -264,8 +272,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      /* 📺 TV SLIDE: Locked to the new fade-in / fade-out sequence animation */
-      <div className="animate-fade-io tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
+      /* 📺 TV UPDATE: Swapped to animate-cross-dissolve for smooth direct blending */
+      <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
         <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
         <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
           <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -283,8 +291,8 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   if (!imgUrl) return null;
 
   return (
-    /* 📺 TV SLIDE: Synchronized identical fade-in / fade-out layout window */
-    <div className="animate-fade-io tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
+    /* 📺 TV UPDATE: Swapped to animate-cross-dissolve for buttery-smooth overlays */
+    <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
@@ -408,13 +416,13 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV LAYOUT */}
-      {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
+      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH CROSS DISSOLVE */}
+      {activeItem && <WeddingPhotoPlayer key={`tv-${activeItem.id}`} item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 VIEWPORT LAYER 2: CLEAN SPLIT-SCREEN DASHBOARD (MOBILE) */}
+      {/* 📱 VIEWPORT LAYER 2: MOBILE WITH FADE-IN / FADE-OUT */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* 🟥 BOX 1: FADE-IN / FADE-OUT IMAGES FRAME */}
+        {/* 🟥 BOX 1: FADE-IN / FADE-OUT FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -422,15 +430,15 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
-            /* 📱 MOBILE SLIDE: Matches identical fade-in/out transition matrix perfectly using unmount mounting keys */
-            <div key={activeMobileItem.id} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
+            /* 📱 MOBILE INSTANCE: Retains strict fade out sequence tracking */
+            <div key={`mobile-${activeMobileItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mobileUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={mobileUrl} alt="Live Feed" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
             </div>
           )}
         </div>
 
-        {/* ⬛ BOX 2: NAVIGATION DIVIDER BAR (Clean layout-driven casing) */}
+        {/* ⬛ BOX 2: NAVIGATION DIVIDER BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
             📸 Click to Photo Upload Page
