@@ -12,13 +12,11 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* 📺 TV EXCLUSIVE: GENTLE OVERLAPPING CROSS DISSOLVE */
   @keyframes crossDissolve {
     from { opacity: 0; }
     to { opacity: 1; }
   }
 
-  /* 📱 MOBILE EXCLUSIVE: STRICTOR FADE-IN / FADE-OUT SEQUENCE */
   @keyframes strictFadeInOut {
     0% { opacity: 0; }
     8% { opacity: 1; }
@@ -30,7 +28,6 @@ const slideshowStyles = `
     animation: kenburns 24s ease-in-out infinite;
   }
   
-  /* Blends directly on top of the layout matrix */
   .animate-cross-dissolve {
     animation: crossDissolve 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
@@ -272,7 +269,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      /* 📺 TV UPDATE: Swapped to animate-cross-dissolve for smooth direct blending */
       <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
         <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
         <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
@@ -291,7 +287,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   if (!imgUrl) return null;
 
   return (
-    /* 📺 TV UPDATE: Swapped to animate-cross-dissolve for buttery-smooth overlays */
     <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
@@ -332,6 +327,7 @@ const db = getFirestore(app);
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [showWelcomeIntercept, setShowWelcomeIntercept] = useState(false);
   const [burstTrigger, setBurstTrigger] = useState(0);
   const previousDataHashRef = useRef('');
   const isInitialLoadRef = useRef(true);
@@ -366,6 +362,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
         if (updatedPhotos.length > 0) {
           setCurrentSlideIndex(0); 
+          setShowWelcomeIntercept(false); // Snap back to content on instant new submission entry
         }
       }
     }, (error) => {
@@ -374,18 +371,13 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => unsubscribe();
   }, [liveEventId, liveGuestUploads.length]);
 
-  const widescreenTimelineItems = useMemo(() => {
-    let combined = [{ id: 'welcome-initial', type: 'welcome' }];
-    if (liveGuestUploads.length > 0) {
-      const sorted = [...liveGuestUploads].sort((a, b) => (b.photo?.createdAt || 0) - (a.photo?.createdAt || 0));
-      sorted.forEach((item, index) => {
-        combined.push({ id: `photo-${index}-${item.id}`, type: 'photo', photo: item.photo });
-        if ((index + 1) % 5 === 0) combined.push({ id: `welcome-loop-${index}`, type: 'welcome' });
-      });
-    }
-    return combined;
+  // 📺 CLEAN PHOTO STACK FOR TV SLIDESHOW
+  const tvPhotoItems = useMemo(() => {
+    if (liveGuestUploads.length === 0) return [];
+    return [...liveGuestUploads].sort((a, b) => (b.photo?.createdAt || 0) - (a.photo?.createdAt || 0));
   }, [liveGuestUploads]);
 
+  // 📱 CLEAN PHOTO STACK FOR MOBILE DASHBOARD
   const mobileSortedGalleryItems = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
@@ -394,15 +386,39 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     });
   }, [liveGuestUploads]);
 
+  // ⏱️ TIMING WHEEL 1: Regular slide rotator interval (Cycles guest photo data every 8.5 seconds)
   useEffect(() => {
-    if (widescreenTimelineItems.length <= 1) return;
+    if (tvPhotoItems.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlideIndex((prev) => (prev + 1) % widescreenTimelineItems.length);
+      setCurrentSlideIndex((prev) => (prev + 1) % tvPhotoItems.length);
     }, 8500);
     return () => clearInterval(interval);
-  }, [widescreenTimelineItems]);
+  }, [tvPhotoItems]);
 
-  const activeItem = widescreenTimelineItems[currentSlideIndex] || widescreenTimelineItems[0];
+  // ⏱️ TIMING WHEEL 2: 🛰️ STRICT 15-SECOND WELCOME SCREEN INTERCEPTOR
+  useEffect(() => {
+    const interceptInterval = setInterval(() => {
+      // Flash the Welcome screen on stage
+      setShowWelcomeIntercept(true);
+      
+      // Let it sit beautifully on screen for 4.5 seconds before dissolving back to content rotation
+      setTimeout(() => {
+        setShowWelcomeIntercept(false);
+      }, 4500);
+
+    }, 15000); // Fires with precision exactly every 15 seconds
+
+    return () => clearInterval(interceptInterval);
+  }, []);
+
+  // 📐 RESOLVE ACTIVE DISPLAY CONTENT OBJECTS
+  const activeItem = useMemo(() => {
+    // If intercept condition hits or database is clean, hold onto root state welcome page frame
+    if (showWelcomeIntercept || tvPhotoItems.length === 0) {
+      return { id: 'welcome-timed-frame', type: 'welcome' };
+    }
+    return tvPhotoItems[currentSlideIndex] || tvPhotoItems[0];
+  }, [showWelcomeIntercept, tvPhotoItems, currentSlideIndex]);
   
   const activeMobileItem = useMemo(() => {
     if (mobileSortedGalleryItems.length === 0) return null;
@@ -416,13 +432,13 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH CROSS DISSOLVE */}
+      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH DYNAMIC INTERCEPT LOGIC */}
       {activeItem && <WeddingPhotoPlayer key={`tv-${activeItem.id}`} item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 VIEWPORT LAYER 2: MOBILE WITH FADE-IN / FADE-OUT */}
+      {/* 📱 VIEWPORT LAYER 2: CLEAN SPLIT-SCREEN DASHBOARD (MOBILE) */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* 🟥 BOX 1: FADE-IN / FADE-OUT FRAME */}
+        {/* 🟥 BOX 1: FADE-IN / FADE-OUT IMAGES ONLY FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -430,7 +446,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
-            /* 📱 MOBILE INSTANCE: Retains strict fade out sequence tracking */
             <div key={`mobile-${activeMobileItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mobileUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={mobileUrl} alt="Live Feed" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
