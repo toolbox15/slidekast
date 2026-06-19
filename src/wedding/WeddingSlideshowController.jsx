@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, query } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 // ==========================================
 // 📱 PREMIUM HYBRID RESPONSIVE GRID STYLES
@@ -12,13 +12,11 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* 📺 TV EXCLUSIVE: ULTRA-SLOW LUXURY CROSS DISSOLVE */
   @keyframes crossDissolve {
     from { opacity: 0; }
     to { opacity: 1; }
   }
 
-  /* 📱 MOBILE EXCLUSIVE: DEEPER, SLOWER FADE-IN / FADE-OUT CURVE */
   @keyframes strictFadeInOut {
     0% { opacity: 0; }
     15% { opacity: 1; }
@@ -141,10 +139,15 @@ const slideshowStyles = `
       border-radius: 8px;
       padding: 15px;
       text-align: left;
+      cursor: pointer;
+      transition: background 0.2s ease;
     }
-    .mobile-feed-card:first-child {
+    .mobile-feed-card:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .mobile-feed-card.active-card {
       border: 1px solid #d9bf8d;
-      background: rgba(217, 191, 141, 0.05);
+      background: rgba(217, 191, 141, 0.04);
     }
     .mobile-feed-sender {
       color: #d9bf8d;
@@ -160,6 +163,54 @@ const slideshowStyles = `
       font-size: 1rem;
       margin: 0;
       line-height: 1.4;
+    }
+    
+    /* 💬 MOBILE REPLY SUB-STACK INTERFACE */
+    .mobile-reply-box {
+      margin-top: 12px;
+      border-top: 1px dashed rgba(217, 191, 141, 0.2);
+      padding-top: 10px;
+    }
+    .mobile-reply-item {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      border-left: 2px solid #d9bf8d;
+    }
+    .mobile-reply-author {
+      color: #d9bf8d;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .mobile-reply-body {
+      color: #e0e0e0;
+    }
+    
+    .mobile-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .mobile-text-field {
+      flex: 1;
+      background: #0c0f12;
+      border: 1px solid rgba(217, 191, 141, 0.4);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .mobile-send-btn {
+      background: #d9bf8d;
+      color: #0c0f12;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
   }
 `;
@@ -275,8 +326,6 @@ const WeddingPhotoPlayer = ({ item, burstTrigger }) => {
 
   return (
     <div className="tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
-      
-      {/* LEFT STAGE: 6.0s Soft Cross Dissolve on Photos Only */}
       <div className="tv-photo-stage animate-cross-dissolve" key={`img-stage-${item.id}`}>
         <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)', zIndex: 2 }}>
@@ -284,19 +333,15 @@ const WeddingPhotoPlayer = ({ item, burstTrigger }) => {
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR: Entirely locked and un-animated */}
       <div className="tv-sidebar-stage">
         <HeartBurstCanvas triggerToggle={burstTrigger} />
-        
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '-3px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
           <img src="/Wedding1/couple-profile.png" style={{ width: '360px', height: '360px', borderRadius: '50%', objectFit: 'cover', border: '7px solid #d9bf8d', boxShadow: '0 20px 45px rgba(0,0,0,0.6)' }} alt="Profile" />
         </div>
-        
         <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>
           {senderName}
         </span>
-        
         <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
@@ -324,6 +369,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [burstTrigger, setBurstTrigger] = useState(0);
+  const [selectedCardId, setSelectedCardId] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [guestName, setGuestName] = useState('');
+  
   const previousDataHashRef = useRef('');
   const isInitialLoadRef = useRef(true);
 
@@ -345,7 +394,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
         if (!targetUrl) return;
         updatedPhotos.push({ id: doc.id, photo: data });
-        incomingDataString += `${doc.id}-${targetUrl};`;
+        incomingDataString += `${doc.id}-${targetUrl}-${JSON.stringify(data.replies || [])};`;
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
@@ -355,7 +404,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         isInitialLoadRef.current = false;
         previousDataHashRef.current = incomingDataString;
         setLiveGuestUploads(updatedPhotos);
-        if (updatedPhotos.length > 0) {
+        if (updatedPhotos.length > 0 && currentSlideIndex === 0) {
           setCurrentSlideIndex(0); 
         }
       }
@@ -363,9 +412,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       console.error("Firestore sync offline", error);
     });
     return () => unsubscribe();
-  }, [liveEventId, liveGuestUploads.length]);
+  }, [liveEventId, liveGuestUploads.length, currentSlideIndex]);
 
-  // Sorted Timeline Items (Newest arrivals first)
   const sortedGalleryItems = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
@@ -374,7 +422,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     });
   }, [liveGuestUploads]);
 
-  // Rotator interval: Cycles photos every 8.5 seconds
   useEffect(() => {
     if (sortedGalleryItems.length <= 1) return;
     const interval = setInterval(() => {
@@ -383,14 +430,39 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => clearInterval(interval);
   }, [sortedGalleryItems]);
 
+  // 📝 SUBMIT MOBILE REPLY STORAGE DIRECT TO FIREBASE 
+  const handleSendReply = async (e, documentId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!replyText.trim()) return;
+
+    const finalAuthor = guestName.trim() || 'Wedding Guest';
+    const replyPayload = {
+      author: finalAuthor,
+      text: replyText.trim(),
+      timestamp: Date.now()
+    };
+
+    try {
+      const docRef = doc(db, 'events', liveEventId, 'receptionStream', documentId);
+      await updateDoc(docRef, {
+        replies: arrayUnion(replyPayload)
+      });
+      setReplyText('');
+    } catch (err) {
+      console.error("Failed to commit live sub-reply", err);
+    }
+  };
+
   const activeItem = sortedGalleryItems[currentSlideIndex];
-  const activeUrl = activeItem?.photo?.imageUrl || activeItem?.photo?.image_url || activeItem?.photo?.url || activeItem?.photo?.downloadURL;
+  const activeMobileItem = sortedGalleryItems[currentSlideIndex % sortedGalleryItems.length] || null;
+  const mobileUrl = activeMobileItem?.photo?.imageUrl || activeMobileItem?.photo?.image_url || activeMobileItem?.photo?.url || activeMobileItem?.photo?.downloadURL;
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV (Photo Only, Continuous Loop) */}
+      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV LAYOUT */}
       {activeItem ? (
         <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />
       ) : (
@@ -399,10 +471,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         </div>
       )}
 
-      {/* 📱 VIEWPORT LAYER 2: MOBILE TIMELINE FEED */}
+      {/* 📱 VIEWPORT LAYER 2: INTERACTIVE SPLIT-SCREEN DASHBOARD */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* BOX 1: MOBILE PHOTO DISPLAY SLIDER FRAME */}
+        {/* BOX 1: FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -410,37 +482,87 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
-            <div key={`mobile-${activeItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
+            <div key={`mobile-${activeMobileItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mobileUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={mobileUrl} alt="Live Feed" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
             </div>
           )}
         </div>
 
-        {/* BOX 2: NAVIGATION BAR */}
+        {/* BOX 2: LINK TO GUEST BOOK DIVIDER BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
             📸 Click to Photo Upload Page
           </a>
         </div>
 
-        {/* BOX 3: MESSAGES TIMELINE FEED */}
+        {/* BOX 3: INTERACTIVE TIMELINE MESSAGES STACK */}
         <div className="mobile-messages-feed">
           {sortedGalleryItems.length === 0 ? (
             <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
               Waiting for the first message...
             </div>
           ) : (
-            sortedGalleryItems.map((item) => (
-              <div key={item.id} className="mobile-feed-card">
-                <span className="mobile-feed-sender">
-                  {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
-                </span>
-                <p className="mobile-feed-text">
-                  "{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"
-                </p>
-              </div>
-            ))
+            sortedGalleryItems.map((item) => {
+              const isSelected = selectedCardId === item.id;
+              const cardReplies = item.photo?.replies || [];
+
+              return (
+                <div 
+                  key={item.id} 
+                  className={`mobile-feed-card ${isSelected ? 'active-card' : ''}`}
+                  onClick={() => setSelectedCardId(isSelected ? null : item.id)}
+                >
+                  <span className="mobile-feed-sender">
+                    {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
+                  </span>
+                  <p className="mobile-feed-text">
+                    "{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"
+                  </p>
+
+                  {/* 💬 TOGGLEABLE SUB-REPLY LAYER SHEET */}
+                  {isSelected ? (
+                    <div className="mobile-reply-box" onClick={(e) => e.stopPropagation()}>
+                      
+                      {/* Render existing replies stored in document node */}
+                      {cardReplies.map((reply, rIdx) => (
+                        <div key={rIdx} className="mobile-reply-item">
+                          <span className="mobile-reply-author">{reply.author}:</span>
+                          <span className="mobile-reply-body">{reply.text}</span>
+                        </div>
+                      ))}
+
+                      {/* Interactive Real-Time Response Input row */}
+                      <form onSubmit={(e) => handleSendReply(e, item.id)} className="mobile-input-row">
+                        <input 
+                          type="text" 
+                          placeholder="Your Name..." 
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          className="mobile-text-field"
+                          style={{ maxWidth: '90px' }}
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Write a response..." 
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="mobile-text-field"
+                        />
+                        <button type="submit" className="mobile-send-btn">Reply</button>
+                      </form>
+                    </div>
+                  ) : (
+                    /* Helpful small hint bubble if replies exist */
+                    cardReplies.length > 0 && (
+                      <div style={{ fontSize: '0.8rem', color: '#d9bf8d', marginTop: '6px', opacity: 0.8 }}>
+                        💬 {cardReplies.length} {cardReplies.length === 1 ? 'response' : 'responses'} (Tap to read)
+                      </div>
+                    )
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
 
