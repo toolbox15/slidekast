@@ -58,7 +58,7 @@ const slideshowStyles = `
     box-sizing: border-box;
   }
 
-  /* 📱 MOBILE ARCHITECTURE OVERRIDES (Matches your wireframe drawing exactly) */
+  /* 📱 MOBILE ARCHITECTURE OVERRIDES */
   @media (max-width: 768px) {
     .tv-display-mode {
       display: none !important;
@@ -72,7 +72,7 @@ const slideshowStyles = `
       overflow: hidden;
     }
     
-    /* Box 1: Live Video / Slide Container (Top 45% of screen) */
+    /* Box 1: Live Slideshow Frame (Top 45% of screen) */
     .mobile-video-frame {
       height: 45vh;
       width: 100%;
@@ -82,23 +82,24 @@ const slideshowStyles = `
       overflow: hidden;
     }
     
-    /* Box 2: Link to Guestbook Bar (Fixed middle divider) */
+    /* Box 2: Royal Blue Action Button Bar (Fixed middle divider) */
     .mobile-action-bar {
       height: 10vh;
       width: 100%;
-      background: #13171e;
-      border-bottom: 2px solid #d9bf8d;
+      background: #0056b3; /* Rich Blue Accent Color */
+      border-bottom: 2px solid #004085;
       display: flex;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
       z-index: 10;
+      box-shadow: 0 4px 15px rgba(0, 86, 179, 0.3);
     }
     .mobile-action-btn {
-      color: #d9bf8d;
-      font-family: system-ui, sans-serif;
-      font-size: 1.1rem;
-      font-weight: bold;
+      color: #ffffff !important;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1px;
       text-decoration: none;
@@ -128,7 +129,6 @@ const slideshowStyles = `
       padding: 15px;
       text-align: left;
     }
-    /* Highlights new incoming messages sitting on top */
     .mobile-feed-card:first-child {
       border: 1px solid #d9bf8d;
       background: rgba(217, 191, 141, 0.05);
@@ -232,9 +232,9 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 };
 
 // ==========================================
-// 1. WIDESCREEN SLIDE SUB-PLAYER Component
+// 1. WIDESCREEN SLIDE PLAY ENGINE
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
+const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger, isMobileFrame = false }) => {
   const [typedMessage, setTypedMessage] = useState('');
 
   const currentPhoto = item?.photo || {};
@@ -263,15 +263,47 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
+      <div className="animate-soft-dissolve" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12', width: '100%', height: '100%' }}>
         <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
-        <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
+        
+        {/* Responsive scaling for QR block inside mobile vs TV windows */}
+        <div style={{ 
+          position: 'absolute', 
+          left: isMobileFrame ? '50%' : '30.8%', 
+          top: isMobileFrame ? '45%' : '55.5%', 
+          transform: 'translate(-50%, -50%)', 
+          zIndex: 5, 
+          width: isMobileFrame ? '160px' : '340px', 
+          height: isMobileFrame ? '160px' : '340px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          background: '#ffffff', 
+          borderRadius: '12px', 
+          padding: isMobileFrame ? '10px' : '20px', 
+          boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' 
+        }}>
           <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
-        <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
-            <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
-            <p style={{ color: '#ffffff', fontSize: '2.4rem', fontStyle: 'italic', margin: 0 }}>Scan the QR Code to share your photos directly!</p>
+        
+        <div style={{ 
+          position: 'absolute', 
+          right: isMobileFrame ? '0' : '4%', 
+          left: isMobileFrame ? '0' : 'auto',
+          bottom: isMobileFrame ? '10%' : 'auto',
+          top: isMobileFrame ? 'auto' : '32%', 
+          width: isMobileFrame ? '100%' : '42%', 
+          zIndex: 5, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          textAlign: 'center',
+          padding: '0 10px'
+        }}>
+          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: isMobileFrame ? '1.4rem' : '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
+            <p style={{ margin: '0 0 5px 0' }}>Welcome Friends & Family</p>
+            {!isMobileFrame && <p style={{ color: '#ffffff', fontSize: '2.4rem', fontStyle: 'italic', margin: 0 }}>Scan the QR Code to share your photos directly!</p>}
           </div>
         </div>
       </div>
@@ -280,6 +312,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
 
   if (!imgUrl) return null;
 
+  // TV Widescreen View Output
   return (
     <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
@@ -375,7 +408,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return combined;
   }, [liveGuestUploads]);
 
-  // ⚡ STRATEGIC STREAM: Newest messages instantly lock right onto the top slot!
   const mobileSortedMessages = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
@@ -399,35 +431,33 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYOUT 1: Renders on Widescreen monitors / TVs */}
-      {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
+      {/* 🖥️ VIEWPORT 1: FULL TV LAYOUT */}
+      {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} isMobileFrame={false} />}
 
-      {/* 📱 VIEWPORT LAYOUT 2: The Wireframe Dashboard (Renders on mobile screens) */}
+      {/* 📱 VIEWPORT 2: SPLIT-SCREEN MOBILE DASHBOARD */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* 🟥 BOX 1: LIVE VIDEO SLIDESHOW CONTAINER LOOP */}
+        {/* 🟥 BOX 1: HIGH-FIDELITY MOBILE MEDIA SLIDE FRAME */}
         <div className="mobile-video-frame">
           {activeItem?.type === 'welcome' ? (
-            <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
-              <span style={{ color: '#d9bf8d', fontFamily: 'Georgia', fontSize: '1.4rem', fontWeight: 'bold' }}>Welcome Friends & Family</span>
-              <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Slideshow Starting Soon...</span>
-            </div>
+            /* 🎬 WELCOME RUNNER: Loads the full video background layout on mobile seamlessly */
+            <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={0} isMobileFrame={true} />
           ) : (
-            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <div style={{ width: '100%', height: '100%', position: 'relative' }} className="animate-soft-dissolve">
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${activeUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={activeUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
             </div>
           )}
         </div>
 
-        {/* ⬛ BOX 2: LINK TO GUEST BOOK DIVIDER BUTTON BAR */}
+        {/* 🟦 BOX 2: ROYAL BLUE IMAGE UPLOAD ACTION BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
-            ✍️ Link to Live Event Guest Book
+            📸 CLICK TO IMAGE UPLOAD PAGE
           </a>
         </div>
 
-        {/* ⬛ BOX 3: LIVE MESSAGE CHAT TIMELINE STREAM */}
+        {/* ⬛ BOX 3: MESSAGES SCROLLING FEED */}
         <div className="mobile-messages-feed">
           {mobileSortedMessages.length === 0 ? (
             <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
