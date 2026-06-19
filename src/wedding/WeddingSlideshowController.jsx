@@ -12,7 +12,7 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* 🎬 SYNCED FADE-IN / FADE-OUT SEQUENCE CRITERIA */
+  /* 🎬 SYNCED FADE-IN / FADE-OUT SEQUENCE FOR TV & MOBILE */
   @keyframes strictFadeInOut {
     0% { opacity: 0; }
     8% { opacity: 1; }
@@ -89,8 +89,8 @@ const slideshowStyles = `
     .mobile-action-bar {
       height: 10vh;
       width: 100%;
-      background: #13171e; /* Returned to original slate background */
-      border-bottom: 2px solid #d9bf8d; /* Original clean gold border tracking */
+      background: #13171e;
+      border-bottom: 2px solid #d9bf8d;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -98,12 +98,11 @@ const slideshowStyles = `
       z-index: 10;
     }
     .mobile-action-btn {
-      color: #ffffff !important; /* Preserved crisp white text label profile */
+      color: #ffffff !important;
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 1.15rem;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       text-decoration: none;
       width: 100%;
       height: 100%;
@@ -265,6 +264,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
+      /* 📺 TV SLIDE: Locked to the new fade-in / fade-out sequence animation */
       <div className="animate-fade-io tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
         <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
         <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
@@ -283,6 +283,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   if (!imgUrl) return null;
 
   return (
+    /* 📺 TV SLIDE: Synchronized identical fade-in / fade-out layout window */
     <div className="animate-fade-io tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
@@ -356,7 +357,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         previousDataHashRef.current = incomingDataString;
         setLiveGuestUploads(updatedPhotos);
         if (updatedPhotos.length > 0) {
-          setCurrentSlideIndex(0); // Safely focuses instantly back to target data indices
+          setCurrentSlideIndex(0); 
         }
       }
     }, (error) => {
@@ -365,7 +366,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => unsubscribe();
   }, [liveEventId, liveGuestUploads.length]);
 
-  // 📺 WIDESCREEN TIMELINE: Alternates loops dynamically
   const widescreenTimelineItems = useMemo(() => {
     let combined = [{ id: 'welcome-initial', type: 'welcome' }];
     if (liveGuestUploads.length > 0) {
@@ -378,7 +378,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return combined;
   }, [liveGuestUploads]);
 
-  // 📱 MOBILE PHOTO-ONLY SLIDER TIMELINE ENGINE (Bypasses welcome elements completely)
   const mobileSortedGalleryItems = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
@@ -397,10 +396,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
 
   const activeItem = widescreenTimelineItems[currentSlideIndex] || widescreenTimelineItems[0];
   
-  // 📱 CALCULATE MOBILE FOCUS TARGET (Bypasses welcome slide checks perfectly)
   const activeMobileItem = useMemo(() => {
     if (mobileSortedGalleryItems.length === 0) return null;
-    // Maps rotation interval down to the total count of real images available
     const mobileIndex = currentSlideIndex % mobileSortedGalleryItems.length;
     return mobileSortedGalleryItems[mobileIndex];
   }, [mobileSortedGalleryItems, currentSlideIndex]);
@@ -417,7 +414,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
       {/* 📱 VIEWPORT LAYER 2: CLEAN SPLIT-SCREEN DASHBOARD (MOBILE) */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* 🟥 BOX 1: FADE-IN / FADE-OUT IMAGES FRAME ONLY */}
+        {/* 🟥 BOX 1: FADE-IN / FADE-OUT IMAGES FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -425,7 +422,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
-            /* Key attribute handles complete unmounting to guarantee clean fade in/out lifecycle on transitions */
+            /* 📱 MOBILE SLIDE: Matches identical fade-in/out transition matrix perfectly using unmount mounting keys */
             <div key={activeMobileItem.id} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mobileUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={mobileUrl} alt="Live Feed" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
@@ -433,10 +430,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
           )}
         </div>
 
-        {/* ⬛ BOX 2: NAVIGATION DIVIDER (Original color matching layout schema) */}
+        {/* ⬛ BOX 2: NAVIGATION DIVIDER BAR (Clean layout-driven casing) */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
-            📸 CLICK TO IMAGE UPLOAD PAGE
+            📸 Click to Photo Upload Page
           </a>
         </div>
 
