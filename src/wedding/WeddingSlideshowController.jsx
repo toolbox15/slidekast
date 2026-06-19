@@ -12,7 +12,6 @@ const slideshowStyles = `
     100% { transform: scale(1.0) translate(0px, 0px); }
   }
   
-  /* ✨ BUTTERY SMOOTH SOFT CROSSFADE MATRIX */
   @keyframes softFadeIn {
     from { opacity: 0; filter: blur(4px); }
     to { opacity: 1; filter: blur(0px); }
@@ -22,12 +21,11 @@ const slideshowStyles = `
     animation: kenburns 24s ease-in-out infinite;
   }
   
-  /* A gentle, elegant 1.5-second blending dissolve */
   .animate-soft-dissolve {
     animation: softFadeIn 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
-  /* 🖥️ WIDESCREEN SMART TV/PROJECTOR DISPLAY LAYOUT */
+  /* 🖥️ TV/WIDESCREEN MODE */
   .tv-display-mode {
     display: flex;
     flex-direction: row;
@@ -60,70 +58,95 @@ const slideshowStyles = `
     box-sizing: border-box;
   }
 
-  /* 📱 MOBILE GALLERY TIMELINE OVERRIDES */
+  /* 📱 MOBILE ARCHITECTURE OVERRIDES (Matches your wireframe drawing exactly) */
   @media (max-width: 768px) {
     .tv-display-mode {
       display: none !important;
     }
-    .mobile-gallery-mode {
-      display: block !important;
+    .mobile-dashboard-layout {
+      display: flex !important;
+      flex-direction: column !important;
       width: 100vw;
       height: 100vh;
-      overflow-y: auto !important;
       background-color: #0c0f12;
-      -webkit-overflow-scrolling: touch;
-    }
-    .mobile-header-banner {
-      background: linear-gradient(to bottom, rgba(20, 24, 30, 0.95), rgba(12, 15, 18, 1));
-      border-bottom: 2px solid rgba(217, 191, 141, 0.3);
-      padding: 30px 20px;
-      text-align: center;
-    }
-    .mobile-feed-container {
-      padding: 20px 15px 60px 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-    }
-    .mobile-guest-card {
-      background: #13171e;
-      border: 2px solid #d9bf8d;
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
-    .mobile-card-img-wrapper {
+    
+    /* Box 1: Live Video / Slide Container (Top 45% of screen) */
+    .mobile-video-frame {
+      height: 45vh;
       width: 100%;
-      height: 300px;
+      position: relative;
       background-color: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      border-bottom: 2px solid rgba(217, 191, 141, 0.3);
+      overflow: hidden;
     }
-    .mobile-card-img {
+    
+    /* Box 2: Link to Guestbook Bar (Fixed middle divider) */
+    .mobile-action-bar {
+      height: 10vh;
+      width: 100%;
+      background: #13171e;
+      border-bottom: 2px solid #d9bf8d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    .mobile-action-btn {
+      color: #d9bf8d;
+      font-family: system-ui, sans-serif;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .mobile-card-content {
-      padding: 20px;
-      text-align: center;
+
+    /* Box 3: Live Messages Feed (Bottom 45% of screen scrolling) */
+    .mobile-messages-feed {
+      height: 45vh;
+      width: 100%;
+      overflow-y: auto !important;
+      padding: 15px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
     }
-    .mobile-card-name {
+    .mobile-feed-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(217, 191, 141, 0.2);
+      border-radius: 8px;
+      padding: 15px;
+      text-align: left;
+    }
+    /* Highlights new incoming messages sitting on top */
+    .mobile-feed-card:first-child {
+      border: 1px solid #d9bf8d;
+      background: rgba(217, 191, 141, 0.05);
+    }
+    .mobile-feed-sender {
       color: #d9bf8d;
       font-family: 'Georgia', serif;
-      font-size: 1.6rem;
       font-weight: bold;
-      margin-bottom: 8px;
+      font-size: 1.1rem;
       display: block;
+      margin-bottom: 4px;
     }
-    .mobile-card-text {
+    .mobile-feed-text {
       color: #ffffff;
       font-family: system-ui, sans-serif;
-      font-size: 1.2rem;
-      font-style: italic;
-      line-height: 1.4;
+      font-size: 1rem;
       margin: 0;
+      line-height: 1.4;
     }
   }
 `;
@@ -136,7 +159,6 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 
   useEffect(() => {
     if (triggerToggle === 0) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -165,7 +187,6 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     }
 
     let animationId;
-    
     function drawHeart(ctx, x, y, size) {
       ctx.beginPath();
       ctx.moveTo(x, y + size / 4);
@@ -182,16 +203,13 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       let alive = false;
-
       particles.forEach((p) => {
         if (p.opacity <= 0) return;
-
         alive = true;
         p.x += p.speedX;
         p.y += p.speedY;
         p.opacity -= 0.012;
         p.rotation += p.rotationSpeed;
-
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.opacity);
         ctx.fillStyle = p.color;
@@ -200,36 +218,21 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
         drawHeart(ctx, 0, 0, p.size);
         ctx.restore();
       });
-
       if (alive) {
         animationId = requestAnimationFrame(animate);
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
-
     animate();
     return () => cancelAnimationFrame(animationId);
   }, [triggerToggle]);
 
-  return (
-    <canvas 
-      ref={canvasRef} 
-      style={{ 
-        position: 'absolute', 
-        inset: 0, 
-        width: '100%', 
-        height: '100%', 
-        pointerEvents: 'none', 
-        zIndex: 2,
-        backgroundColor: 'transparent'
-      }} 
-    />
-  );
+  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2, backgroundColor: 'transparent' }} />;
 };
 
 // ==========================================
-// 1. UNIFIED DISPLAY COMPONENT
+// 1. WIDESCREEN SLIDE SUB-PLAYER Component
 // ==========================================
 const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   const [typedMessage, setTypedMessage] = useState('');
@@ -244,7 +247,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     let charIndex = 0;
     setTypedMessage('');
     const cleanMessage = String(messageText);
-
     const typerInterval = setInterval(() => {
       if (charIndex <= cleanMessage.length) {
         setTypedMessage(cleanMessage.substring(0, charIndex));
@@ -253,7 +255,6 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
         clearInterval(typerInterval);
       }
     }, 35);
-
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
@@ -263,15 +264,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
 
     return (
       <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
-        <video 
-          src="/Wedding1/welcome-bg.mp4" 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          preload="auto"
-          style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} 
-        />
+        <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
         <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
           <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
@@ -290,49 +283,18 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   return (
     <div className="animate-soft-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
-      
       <div className="tv-photo-stage" style={{ zIndex: 2 }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
           <img className="animate-kenburns" src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} />
         </div>
       </div>
-
       <div className="tv-sidebar-stage" style={{ zIndex: 5, textAlign: 'center' }}>
         <HeartBurstCanvas triggerToggle={burstTrigger} />
-
-        <img 
-          src="/Wedding1/gold-divider.png" 
-          alt="" 
-          style={{ 
-            width: 'calc(100% - 4px)', 
-            height: 'auto', 
-            marginTop: '-3px', 
-            marginBottom: '35px', 
-            mixBlendMode: 'screen', 
-            opacity: 0.95, 
-            zIndex: 3 
-          }} 
-        />
-        
+        <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '-3px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
-          <img 
-            src="/Wedding1/couple-profile.png" 
-            style={{ 
-              width: '360px', 
-              height: '360px', 
-              borderRadius: '50%', 
-              objectFit: 'cover', 
-              border: '7px solid #d9bf8d', 
-              boxShadow: '0 20px 45px rgba(0,0,0,0.6)' 
-            }} 
-            alt="Profile" 
-          />
+          <img src="/Wedding1/couple-profile.png" style={{ width: '360px', height: '360px', borderRadius: '50%', objectFit: 'cover', border: '7px solid #d9bf8d', boxShadow: '0 20px 45px rgba(0,0,0,0.6)' }} alt="Profile" />
         </div>
-        
-        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>
-          {senderName}
-        </span>
-        
+        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>{senderName}</span>
         <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
@@ -376,7 +338,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const updatedPhotos = [];
       let incomingDataString = '';
-
       snapshot.forEach((doc) => {
         const data = doc.data();
         const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
@@ -399,7 +360,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     }, (error) => {
       console.error("Firestore sync offline", error);
     });
-
     return () => unsubscribe();
   }, [liveEventId, liveGuestUploads.length]);
 
@@ -415,7 +375,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return combined;
   }, [liveGuestUploads]);
 
-  const mobileSortedGallery = useMemo(() => {
+  // ⚡ STRATEGIC STREAM: Newest messages instantly lock right onto the top slot!
+  const mobileSortedMessages = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
       const timeB = b.photo?.createdAt?.seconds || b.photo?.createdAt || 0;
@@ -432,48 +393,60 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   }, [widescreenTimelineItems]);
 
   const activeItem = widescreenTimelineItems[currentSlideIndex] || widescreenTimelineItems[0];
+  const activeUrl = activeItem?.photo?.imageUrl || activeItem?.photo?.image_url || activeItem?.photo?.url || activeItem?.photo?.downloadURL;
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ TV DISPLAY INTERFACE */}
+      {/* 🖥️ VIEWPORT LAYOUT 1: Renders on Widescreen monitors / TVs */}
       {activeItem && <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 MOBILE INSTANT TIMELINE FEED */}
-      <div className="mobile-gallery-mode" style={{ display: 'none' }}>
-        <header className="mobile-header-banner">
-          <h1 style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', margin: '0 0 8px 0', fontSize: '2rem' }}>Welcome Friends & Family</h1>
-          <p style={{ color: '#ffffff', fontFamily: 'system-ui', fontSize: '1.05rem', margin: '0 0 20px 0', fontStyle: 'italic', opacity: 0.85 }}>
-            Live Guest Gallery Roll
-          </p>
-          <a href={`/${liveEventId}`} style={{ display: 'inline-block', padding: '12px 30px', backgroundColor: '#d9bf8d', color: '#0c0f12', fontFamily: 'system-ui, sans-serif', fontSize: '1.1rem', fontWeight: 'bold', textDecoration: 'none', borderRadius: '30px', boxShadow: '0 4px 15px rgba(215, 180, 106, 0.4)' }}>
-            📸 Upload Another Photo
-          </a>
-        </header>
-
-        <main className="mobile-feed-container">
-          {mobileSortedGallery.length === 0 ? (
-            <div style={{ color: '#ffffff', textAlign: 'center', padding: '40px 20px', fontFamily: 'system-ui', opacity: 0.6 }}>
-              No photos submitted yet. Be the first to share a memory!
+      {/* 📱 VIEWPORT LAYOUT 2: The Wireframe Dashboard (Renders on mobile screens) */}
+      <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
+        
+        {/* 🟥 BOX 1: LIVE VIDEO SLIDESHOW CONTAINER LOOP */}
+        <div className="mobile-video-frame">
+          {activeItem?.type === 'welcome' ? (
+            <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
+              <span style={{ color: '#d9bf8d', fontFamily: 'Georgia', fontSize: '1.4rem', fontWeight: 'bold' }}>Welcome Friends & Family</span>
+              <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Slideshow Starting Soon...</span>
             </div>
           ) : (
-            mobileSortedGallery.map((item) => {
-              const url = item.photo.imageUrl || item.photo.image_url || item.photo.url || item.photo.downloadURL;
-              return (
-                <article key={item.id} className="mobile-guest-card">
-                  <div className="mobile-card-img-wrapper">
-                    <img src={url} alt="Guest Upload" className="mobile-card-img" />
-                  </div>
-                  <div className="mobile-card-content">
-                    <span className="mobile-card-name">{item.photo.sender_name || item.photo.sender || 'Wedding Guest'}</span>
-                    <p className="mobile-card-text">"{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"</p>
-                  </div>
-                </article>
-              );
-            })
+            <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+              <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${activeUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
+              <img src={activeUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
+            </div>
           )}
-        </main>
+        </div>
+
+        {/* ⬛ BOX 2: LINK TO GUEST BOOK DIVIDER BUTTON BAR */}
+        <div className="mobile-action-bar">
+          <a href={`/${liveEventId}`} className="mobile-action-btn">
+            ✍️ Link to Live Event Guest Book
+          </a>
+        </div>
+
+        {/* ⬛ BOX 3: LIVE MESSAGE CHAT TIMELINE STREAM */}
+        <div className="mobile-messages-feed">
+          {mobileSortedMessages.length === 0 ? (
+            <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
+              Waiting for the first message...
+            </div>
+          ) : (
+            mobileSortedMessages.map((item) => (
+              <div key={item.id} className="mobile-feed-card">
+                <span className="mobile-feed-sender">
+                  {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
+                </span>
+                <p className="mobile-feed-text">
+                  "{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+
       </div>
     </div>
   );
