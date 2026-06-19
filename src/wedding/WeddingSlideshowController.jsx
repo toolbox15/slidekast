@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, query, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, doc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 
 // ==========================================
 // 📱 PREMIUM HYBRID RESPONSIVE GRID STYLES
@@ -140,23 +140,50 @@ const slideshowStyles = `
       padding: 15px;
       text-align: left;
       cursor: pointer;
+      position: relative; /* Anchor for canvas bubbles */
+      overflow: visible;
       transition: background 0.2s ease;
-    }
-    .mobile-feed-card:active {
-      background: rgba(255, 255, 255, 0.08);
     }
     .mobile-feed-card.active-card {
       border: 1px solid #d9bf8d;
       background: rgba(217, 191, 141, 0.04);
     }
+    
+    .mobile-card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    
     .mobile-feed-sender {
       color: #d9bf8d;
       font-family: 'Georgia', serif;
       font-weight: bold;
       font-size: 1.1rem;
-      display: block;
-      margin-bottom: 4px;
     }
+    
+    /* ❤️ CARD-LEVEL LIKE INTERFACE BUTTON */
+    .mobile-like-trigger-zone {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(217, 191, 141, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      color: #ffffff;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+      font-weight: bold;
+      z-index: 5;
+      position: relative;
+    }
+    .mobile-like-trigger-zone:active {
+      transform: scale(0.92);
+      background: rgba(217, 191, 141, 0.1);
+    }
+
     .mobile-feed-text {
       color: #ffffff;
       font-family: system-ui, sans-serif;
@@ -165,7 +192,6 @@ const slideshowStyles = `
       line-height: 1.4;
     }
     
-    /* 💬 MOBILE REPLY SUB-STACK INTERFACE */
     .mobile-reply-box {
       margin-top: 12px;
       border-top: 1px dashed rgba(217, 191, 141, 0.2);
@@ -210,13 +236,143 @@ const slideshowStyles = `
       border-radius: 6px;
       font-weight: bold;
       font-size: 0.9rem;
-      cursor: pointer;
     }
   }
 `;
 
 // ==========================================
-// ❤️ DESIGN-ANCHORED HEART EMITTER
+// 🎇 LOCALIZED CARD PARTICLE BURST CANVAS
+// ==========================================
+const CardBurstCanvas = ({ clicks, isMemorial }) => {
+  const canvasRef = useRef(null);
+  const prevClicksRef = useRef(clicks);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let activeParticles = [];
+    let animationFrameId;
+
+    const setupCanvasSize = () => {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    };
+    setupCanvasSize();
+
+    const spawnParticles = () => {
+      const colors = isMemorial ? ['#ffffff', '#d9bf8d', '#e0e0e0'] : ['#ff4d6d', '#ff758f', '#ff8fa3', '#d9bf8d'];
+      
+      // Spawn near the bottom right area where the like button sits
+      const originX = canvas.width - 45;
+      const originY = canvas.height - 20;
+
+      for (let i = 0; i < 8; i++) {
+        activeParticles.push({
+          x: originX + (Math.random() - 0.5) * 20,
+          y: originY,
+          size: Math.random() * 10 + 6,
+          speedX: (Math.random() - 0.5) * 4,
+          speedY: -Math.random() * 4 - 2, // Upward floating vector
+          opacity: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * Math.PI,
+          spinSpeed: (Math.random() - 0.5) * 0.08
+        });
+      }
+    };
+
+    // Detect click state change to spawn a localized cluster
+    if (clicks > prevClicksRef.current) {
+      spawnParticles();
+      prevClicksRef.current = clicks;
+    }
+
+    // Shapes: Heart Canvas Generator
+    const drawHeartShape = (ctx, x, y, size) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size / 4);
+      ctx.quadraticCurveTo(x, y - size / 2, x + size / 2, y - size / 2);
+      ctx.quadraticCurveTo(x + size, y - size / 2, x + size, y + size / 4);
+      ctx.quadraticCurveTo(x + size, y + size * 0.75, x, y + size * 1.2);
+      ctx.quadraticCurveTo(x - size, y + size * 0.75, x - size, y + size / 4);
+      ctx.quadraticCurveTo(x - size, y - size / 2, x, y - size / 2);
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    // Shapes: Cross Canvas Generator
+    const drawCrossShape = (ctx, x, y, size) => {
+      const thickness = size * 0.3;
+      ctx.beginPath();
+      // Horizontal bar
+      ctx.rect(x - size / 2, y - thickness / 2, size, thickness);
+      // Vertical bar
+      ctx.rect(x - thickness / 2, y - size * 0.7, thickness, size * 1.3);
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    const loop = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let holdsAlive = false;
+
+      activeParticles.forEach((p) => {
+        if (p.opacity <= 0) return;
+        holdsAlive = true;
+
+        p.x += p.speedX;
+        p.y += p.speedY;
+        p.opacity -= 0.02;
+        p.rotation += p.spinSpeed;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        
+        if (isMemorial) {
+          drawCrossShape(ctx, 0, 0, p.size);
+        } else {
+          drawHeartShape(ctx, 0, 0, p.size);
+        }
+        
+        ctx.restore();
+      });
+
+      if (holdsAlive) {
+        animationFrameId = requestAnimationFrame(loop);
+      }
+    };
+
+    if (activeParticles.length > 0 || clicks > 0) {
+      loop();
+    }
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [clicks, isMemorial]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        width: '100%', 
+        height: '100%', 
+        pointerEvents: 'none', 
+        zIndex: 4, 
+        backgroundColor: 'transparent' 
+      }} 
+    />
+  );
+};
+
+// ==========================================
+// ❤️ DESIGN-ANCHORED RECEPTION SCREEN BURST
 // ==========================================
 const HeartBurstCanvas = ({ triggerToggle }) => {
   const canvasRef = useRef(null);
@@ -259,7 +415,6 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
       ctx.quadraticCurveTo(x + size, y + size * 0.75, x, y + size * 1.2);
       ctx.quadraticCurveTo(x - size, y + size * 0.75, x - size, y + size / 4);
       ctx.quadraticCurveTo(x - size, y - size / 2, x, y - size / 2);
-      ctx.quadraticCurveTo(x, y + size / 4, x, y + size / 4);
       ctx.closePath();
       ctx.fill();
     }
@@ -365,13 +520,16 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
-export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
+export const WeddingSlideshowController = ({ liveEventId: passedEventId, eventType }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [burstTrigger, setBurstTrigger] = useState(0);
   const [selectedCardId, setSelectedCardId] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [guestName, setGuestName] = useState('');
+  
+  // Local state map to trigger immediate UI canvas burst before network finish
+  const [localClickCounters, setLocalClickCounters] = useState({});
   
   const previousDataHashRef = useRef('');
   const isInitialLoadRef = useRef(true);
@@ -381,6 +539,10 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
     return pathSegments[0] || 'wedding';
   }, [passedEventId]);
+
+  const isMemorialTheme = useMemo(() => {
+    return eventType === "Tom-Memorial" || liveEventId.toLowerCase().includes('memorial');
+  }, [eventType, liveEventId]);
 
   useEffect(() => {
     const targetCollectionRef = collection(db, 'events', liveEventId, 'receptionStream');
@@ -394,7 +556,7 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         const targetUrl = data.imageUrl || data.image_url || data.url || data.downloadURL;
         if (!targetUrl) return;
         updatedPhotos.push({ id: doc.id, photo: data });
-        incomingDataString += `${doc.id}-${targetUrl}-${JSON.stringify(data.replies || [])};`;
+        incomingDataString += `${doc.id}-${targetUrl}-${data.likeCount || 0}-${JSON.stringify(data.replies || [])};`;
       });
       
       if (incomingDataString !== previousDataHashRef.current) {
@@ -430,7 +592,28 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => clearInterval(interval);
   }, [sortedGalleryItems]);
 
-  // 📝 SUBMIT MOBILE REPLY STORAGE DIRECT TO FIREBASE 
+  // 📝 PERSISTENT FIREBASE LIKE INCREMENT ROUTER
+  const handleLikeIncrement = async (e, documentId) => {
+    e.preventDefault();
+    e.stopPropagation(); // Avoid triggering card expanded drawer
+    
+    // 1. Immediately increment local click counters to fire smooth canvas animations instantly
+    setLocalClickCounters((prev) => ({
+      ...prev,
+      [documentId]: (prev[documentId] || 0) + 1
+    }));
+
+    // 2. Commit transaction straight to deep Firebase document tree
+    try {
+      const docRef = doc(db, 'events', liveEventId, 'receptionStream', documentId);
+      await updateDoc(docRef, {
+        likeCount: increment(1)
+      });
+    } catch (err) {
+      console.error("Could not append interaction like counter", err);
+    }
+  };
+
   const handleSendReply = async (e, documentId) => {
     e.preventDefault();
     e.stopPropagation();
@@ -471,14 +654,16 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         </div>
       )}
 
-      {/* 📱 VIEWPORT LAYER 2: INTERACTIVE SPLIT-SCREEN DASHBOARD */}
+      {/* 📱 VIEWPORT LAYER 2: INTERACTIVE DASHBOARD WITH LOCALIZED CANVAS PARTICLE ENGINES */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
         {/* BOX 1: FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
-              <span style={{ color: '#d9bf8d', fontFamily: 'Georgia', fontSize: '1.4rem', fontWeight: 'bold' }}>Marcus & Danielle</span>
+              <span style={{ color: '#d9bf8d', fontFamily: 'Georgia', fontSize: '1.4rem', fontWeight: 'bold' }}>
+                {isMemorialTheme ? "In Loving Memory" : "Marcus & Danielle"}
+              </span>
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
@@ -489,14 +674,14 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
           )}
         </div>
 
-        {/* BOX 2: LINK TO GUEST BOOK DIVIDER BAR */}
+        {/* BOX 2: NAVIGATION BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
             📸 Click to Photo Upload Page
           </a>
         </div>
 
-        {/* BOX 3: INTERACTIVE TIMELINE MESSAGES STACK */}
+        {/* BOX 3: INTERACTIVE TIMELINE FEED WITH ADAPTIVE THEME EMITTERS */}
         <div className="mobile-messages-feed">
           {sortedGalleryItems.length === 0 ? (
             <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
@@ -506,6 +691,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
             sortedGalleryItems.map((item) => {
               const isSelected = selectedCardId === item.id;
               const cardReplies = item.photo?.replies || [];
+              const databaseLikes = item.photo?.likeCount || 0;
+              const localClicks = localClickCounters[item.id] || 0;
 
               return (
                 <div 
@@ -513,18 +700,32 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
                   className={`mobile-feed-card ${isSelected ? 'active-card' : ''}`}
                   onClick={() => setSelectedCardId(isSelected ? null : item.id)}
                 >
-                  <span className="mobile-feed-sender">
-                    {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
-                  </span>
+                  {/* 🎇 Local embedded particle layer matches theme constraints directly */}
+                  <CardBurstCanvas clicks={localClicks} isMemorial={isMemorialTheme} />
+
+                  <div className="mobile-card-header-row">
+                    <span className="mobile-feed-sender">
+                      {item.photo.sender_name || item.photo.sender || (isMemorialTheme ? 'Family Friend' : 'Wedding Guest')}
+                    </span>
+                    
+                    {/* ❤️/⛪ SHY-USER HIGH ENGAGEMENT INTERACTION REGION */}
+                    <button 
+                      type="button" 
+                      className="mobile-like-trigger-zone"
+                      onClick={(e) => handleLikeIncrement(e, item.id)}
+                    >
+                      <span>{isMemorialTheme ? "🤍" : "❤️"}</span>
+                      <span>{databaseLikes + localClicks === 0 ? "Like" : databaseLikes}</span>
+                    </button>
+                  </div>
+
                   <p className="mobile-feed-text">
-                    "{item.photo.message_text || item.photo.message || 'Cheers to the beautiful couple!'}"
+                    "{item.photo.message_text || item.photo.message || (isMemorialTheme ? 'Thinking of you during this time.' : 'Cheers to the beautiful couple!')}"
                   </p>
 
-                  {/* 💬 TOGGLEABLE SUB-REPLY LAYER SHEET */}
+                  {/* 💬 REPLIES AREA */}
                   {isSelected ? (
                     <div className="mobile-reply-box" onClick={(e) => e.stopPropagation()}>
-                      
-                      {/* Render existing replies stored in document node */}
                       {cardReplies.map((reply, rIdx) => (
                         <div key={rIdx} className="mobile-reply-item">
                           <span className="mobile-reply-author">{reply.author}:</span>
@@ -532,7 +733,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
                         </div>
                       ))}
 
-                      {/* Interactive Real-Time Response Input row */}
                       <form onSubmit={(e) => handleSendReply(e, item.id)} className="mobile-input-row">
                         <input 
                           type="text" 
@@ -549,13 +749,12 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
                           onChange={(e) => setReplyText(e.target.value)}
                           className="mobile-text-field"
                         />
-                        <button type="submit" className="mobile-send-btn">Reply</button>
+                        <button type="submit" className="mobile-send-btn" onClick={(e) => handleSendReply(e, item.id)}>Reply</button>
                       </form>
                     </div>
                   ) : (
-                    /* Helpful small hint bubble if replies exist */
                     cardReplies.length > 0 && (
-                      <div style={{ fontSize: '0.8rem', color: '#d9bf8d', marginTop: '6px', opacity: 0.8 }}>
+                      <div style={{ fontSize: '0.8rem', color: '#d9bf8d', marginTop: '8px', opacity: 0.8 }}>
                         💬 {cardReplies.length} {cardReplies.length === 1 ? 'response' : 'responses'} (Tap to read)
                       </div>
                     )
