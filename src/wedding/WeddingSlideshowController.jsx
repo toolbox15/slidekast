@@ -30,7 +30,6 @@ const slideshowStyles = `
     animation: kenburns 24s ease-in-out infinite;
   }
   
-  /* ⏳ ISOLATED ENGINE: Applied strictly to left-side assets now */
   .animate-cross-dissolve {
     animation: crossDissolve 6.0s cubic-bezier(0.445, 0.05, 0.55, 0.95) forwards;
   }
@@ -248,7 +247,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
 // ==========================================
 // 1. UNIFIED PRESENTATION ELEMENT PLAYER
 // ==========================================
-const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
+const WeddingPhotoPlayer = ({ item, burstTrigger }) => {
   const [typedMessage, setTypedMessage] = useState('');
 
   const currentPhoto = item?.photo || {};
@@ -257,7 +256,7 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
   const imgUrl = currentPhoto.imageUrl || currentPhoto.image_url || currentPhoto.url || currentPhoto.downloadURL || '';
 
   useEffect(() => {
-    if (item.type !== 'photo' || !messageText) return;
+    if (!messageText) return;
     let charIndex = 0;
     setTypedMessage('');
     const cleanMessage = String(messageText);
@@ -270,53 +269,22 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
       }
     }, 35);
     return () => clearInterval(typerInterval);
-  }, [messageText, item.type, item.id]);
-
-  // 1. Handle Welcome Card View
-  if (item.type === 'welcome') {
-    const qrCodeTargetUrl = `https://slidekast.vercel.app/${liveEventId}`;
-    const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
-
-    return (
-      <div className="tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
-        {/* LEFT COMPONENT LAYER: Runs the slow cross dissolve strictly on this section */}
-        <div className="tv-photo-stage animate-cross-dissolve">
-          <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
-          <div style={{ position: 'absolute', left: '46%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
-            <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-        </div>
-
-        {/* RIGHT SIDEBAR LAYER: Remains entirely solid, static, and un-animated */}
-        <div className="tv-sidebar-stage">
-          <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '-3px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
-            <img src="/Wedding1/couple-profile.png" style={{ width: '360px', height: '360px', borderRadius: '50%', objectFit: 'cover', border: '7px solid #d9bf8d', boxShadow: '0 20px 45px rgba(0,0,0,0.6)' }} alt="Profile" />
-          </div>
-          <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '20px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>Welcome Friends & Family</span>
-          <p style={{ color: '#ffffff', fontFamily: 'system-ui, sans-serif', fontSize: '1.8rem', margin: 0, fontStyle: 'italic', fontWeight: '500', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
-            Scan the QR Code to share your photos and messages live on this screen!
-          </p>
-        </div>
-      </div>
-    );
-  }
+  }, [messageText, item.id]);
 
   if (!imgUrl) return null;
 
-  // 2. Handle standard Guest Photo View
   return (
     <div className="tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
       
-      {/* 🔮 ISOLATION BOUNDARY: The 6.0s transition is wrapped strictly around this left container block */}
-      <div className="tv-photo-stage animate-cross-dissolve">
+      {/* LEFT STAGE: 6.0s Soft Cross Dissolve on Photos Only */}
+      <div className="tv-photo-stage animate-cross-dissolve" key={`img-stage-${item.id}`}>
         <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
         <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)', zIndex: 2 }}>
           <img className="animate-kenburns" src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} />
         </div>
       </div>
 
-      {/* 🔒 STATIC ASSET ZONE: The right sidebar remains completely locked and un-animated */}
+      {/* RIGHT SIDEBAR: Entirely locked and un-animated */}
       <div className="tv-sidebar-stage">
         <HeartBurstCanvas triggerToggle={burstTrigger} />
         
@@ -355,7 +323,6 @@ const db = getFirestore(app);
 export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
   const [liveGuestUploads, setLiveGuestUploads] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [showWelcomeIntercept, setShowWelcomeIntercept] = useState(false);
   const [burstTrigger, setBurstTrigger] = useState(0);
   const previousDataHashRef = useRef('');
   const isInitialLoadRef = useRef(true);
@@ -390,7 +357,6 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
         setLiveGuestUploads(updatedPhotos);
         if (updatedPhotos.length > 0) {
           setCurrentSlideIndex(0); 
-          setShowWelcomeIntercept(false);
         }
       }
     }, (error) => {
@@ -399,12 +365,8 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     return () => unsubscribe();
   }, [liveEventId, liveGuestUploads.length]);
 
-  const tvPhotoItems = useMemo(() => {
-    if (liveGuestUploads.length === 0) return [];
-    return [...liveGuestUploads].sort((a, b) => (b.photo?.createdAt || 0) - (a.photo?.createdAt || 0));
-  }, [liveGuestUploads]);
-
-  const mobileSortedGalleryItems = useMemo(() => {
+  // Sorted Timeline Items (Newest arrivals first)
+  const sortedGalleryItems = useMemo(() => {
     return [...liveGuestUploads].sort((a, b) => {
       const timeA = a.photo?.createdAt?.seconds || a.photo?.createdAt || 0;
       const timeB = b.photo?.createdAt?.seconds || b.photo?.createdAt || 0;
@@ -412,51 +374,35 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     });
   }, [liveGuestUploads]);
 
+  // Rotator interval: Cycles photos every 8.5 seconds
   useEffect(() => {
-    if (tvPhotoItems.length <= 1) return;
+    if (sortedGalleryItems.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlideIndex((prev) => (prev + 1) % tvPhotoItems.length);
+      setCurrentSlideIndex((prev) => (prev + 1) % sortedGalleryItems.length);
     }, 8500);
     return () => clearInterval(interval);
-  }, [tvPhotoItems]);
+  }, [sortedGalleryItems]);
 
-  useEffect(() => {
-    const interceptInterval = setInterval(() => {
-      setShowWelcomeIntercept(true);
-      setTimeout(() => {
-        setShowWelcomeIntercept(false);
-      }, 4500);
-    }, 15000);
-
-    return () => clearInterval(interceptInterval);
-  }, []);
-
-  const activeItem = useMemo(() => {
-    if (showWelcomeIntercept || tvPhotoItems.length === 0) {
-      return { id: 'welcome-timed-frame', type: 'welcome' };
-    }
-    return tvPhotoItems[currentSlideIndex] || tvPhotoItems[0];
-  }, [showWelcomeIntercept, tvPhotoItems, currentSlideIndex]);
-  
-  const activeMobileItem = useMemo(() => {
-    if (mobileSortedGalleryItems.length === 0) return null;
-    const mobileIndex = currentSlideIndex % mobileSortedGalleryItems.length;
-    return mobileSortedGalleryItems[mobileIndex];
-  }, [mobileSortedGalleryItems, currentSlideIndex]);
-
-  const mobileUrl = activeMobileItem?.photo?.imageUrl || activeMobileItem?.photo?.image_url || activeMobileItem?.photo?.url || activeMobileItem?.photo?.downloadURL;
+  const activeItem = sortedGalleryItems[currentSlideIndex];
+  const activeUrl = activeItem?.photo?.imageUrl || activeItem?.photo?.image_url || activeItem?.photo?.url || activeItem?.photo?.downloadURL;
 
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH ISOLATED LEFT-SIDE TRANSITIONS */}
-      {activeItem && <WeddingPhotoPlayer key={`tv-${activeItem.id}`} item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
+      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV (Photo Only, Continuous Loop) */}
+      {activeItem ? (
+        <WeddingPhotoPlayer item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />
+      ) : (
+        <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0c0f12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#d9bf8d', fontFamily: 'Georgia', fontSize: '2rem' }}>Waiting for Photos...</span>
+        </div>
+      )}
 
-      {/* 📱 VIEWPORT LAYER 2: CLEAN SPLIT-SCREEN DASHBOARD (MOBILE) */}
+      {/* 📱 VIEWPORT LAYER 2: MOBILE TIMELINE FEED */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
-        {/* 🟥 BOX 1: MOBILE TIMELINE FADE FRAME */}
+        {/* BOX 1: MOBILE PHOTO DISPLAY SLIDER FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -464,28 +410,28 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
               <span style={{ color: '#ffffff', opacity: 0.7, fontSize: '1rem', marginTop: '5px', fontStyle: 'italic' }}>Live Guest Slideshow Feed</span>
             </div>
           ) : (
-            <div key={`mobile-${activeMobileItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
+            <div key={`mobile-${activeItem.id}`} className="animate-fade-io" style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
               <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${mobileUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(30%)' }} />
               <img src={mobileUrl} alt="Live Feed" style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'relative', zIndex: 2 }} />
             </div>
           )}
         </div>
 
-        {/* ⬛ BOX 2: NAVIGATION DIVIDER BAR */}
+        {/* BOX 2: NAVIGATION BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
             📸 Click to Photo Upload Page
           </a>
         </div>
 
-        {/* ⬛ BOX 3: MESSAGES SCROLLING TIMELINE */}
+        {/* BOX 3: MESSAGES TIMELINE FEED */}
         <div className="mobile-messages-feed">
-          {mobileSortedGalleryItems.length === 0 ? (
+          {sortedGalleryItems.length === 0 ? (
             <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
               Waiting for the first message...
             </div>
           ) : (
-            mobileSortedGalleryItems.map((item) => (
+            sortedGalleryItems.map((item) => (
               <div key={item.id} className="mobile-feed-card">
                 <span className="mobile-feed-sender">
                   {item.photo.sender_name || item.photo.sender || 'Wedding Guest'}
