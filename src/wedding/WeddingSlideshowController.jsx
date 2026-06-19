@@ -30,7 +30,7 @@ const slideshowStyles = `
     animation: kenburns 24s ease-in-out infinite;
   }
   
-  /* ⏳ EXTENDED TO 6.0 SECONDS: Creating a beautifully slow blending curve */
+  /* ⏳ ISOLATED ENGINE: Applied strictly to left-side assets now */
   .animate-cross-dissolve {
     animation: crossDissolve 6.0s cubic-bezier(0.445, 0.05, 0.55, 0.95) forwards;
   }
@@ -58,6 +58,9 @@ const slideshowStyles = `
     align-items: center;
     padding: 40px 30px;
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    background-color: #000000;
   }
   .tv-sidebar-stage {
     width: 35%;
@@ -70,6 +73,8 @@ const slideshowStyles = `
     justify-content: flex-start;
     padding: 0 35px 40px 35px;
     box-sizing: border-box;
+    position: relative;
+    z-index: 10;
   }
 
   /* 📱 MOBILE ARCHITECTURE OVERRIDES */
@@ -237,7 +242,7 @@ const HeartBurstCanvas = ({ triggerToggle }) => {
     return () => cancelAnimationFrame(animationId);
   }, [triggerToggle]);
 
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2, backgroundColor: 'transparent' }} />;
+  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 12, backgroundColor: 'transparent' }} />;
 };
 
 // ==========================================
@@ -267,21 +272,31 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
     return () => clearInterval(typerInterval);
   }, [messageText, item.type, item.id]);
 
+  // 1. Handle Welcome Card View
   if (item.type === 'welcome') {
     const qrCodeTargetUrl = `https://slidekast.vercel.app/${liveEventId}`;
     const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeTargetUrl)}&color=0-0-0&bgcolor=ffffff`;
 
     return (
-      <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0, backgroundColor: '#0c0f12' }}>
-        <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
-        <div style={{ position: 'absolute', left: '30.8%', top: '55.5%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
-          <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        </div>
-        <div style={{ position: 'absolute', right: '4%', top: '32%', width: '42%', height: '55%', zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-          <div style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.3rem', lineHeight: '1.4', fontWeight: 'bold', textShadow: '0 4px 12px rgba(0,0,0,0.9)' }}>
-            <p style={{ margin: '0 0 20px 0' }}>Welcome Friends & Family</p>
-            <p style={{ color: '#ffffff', fontSize: '2.4rem', fontStyle: 'italic', margin: 0 }}>Scan the QR Code to share your photos directly!</p>
+      <div className="tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
+        {/* LEFT COMPONENT LAYER: Runs the slow cross dissolve strictly on this section */}
+        <div className="tv-photo-stage animate-cross-dissolve">
+          <video src="/Wedding1/welcome-bg.mp4" autoPlay loop muted playsInline preload="auto" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }} />
+          <div style={{ position: 'absolute', left: '46%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 5, width: '340px', height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 0 50px rgba(215, 180, 106, 0.5)' }}>
+            <img src={qrCodeApiUrl} alt="Scan QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
+        </div>
+
+        {/* RIGHT SIDEBAR LAYER: Remains entirely solid, static, and un-animated */}
+        <div className="tv-sidebar-stage">
+          <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '-3px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
+            <img src="/Wedding1/couple-profile.png" style={{ width: '360px', height: '360px', borderRadius: '50%', objectFit: 'cover', border: '7px solid #d9bf8d', boxShadow: '0 20px 45px rgba(0,0,0,0.6)' }} alt="Profile" />
+          </div>
+          <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '20px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>Welcome Friends & Family</span>
+          <p style={{ color: '#ffffff', fontFamily: 'system-ui, sans-serif', fontSize: '1.8rem', margin: 0, fontStyle: 'italic', fontWeight: '500', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
+            Scan the QR Code to share your photos and messages live on this screen!
+          </p>
         </div>
       </div>
     );
@@ -289,21 +304,31 @@ const WeddingPhotoPlayer = ({ item, liveEventId, burstTrigger }) => {
 
   if (!imgUrl) return null;
 
+  // 2. Handle standard Guest Photo View
   return (
-    <div className="animate-cross-dissolve tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
-      <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
-      <div className="tv-photo-stage" style={{ zIndex: 2 }}>
-        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)' }}>
+    <div className="tv-display-mode" style={{ position: 'absolute', inset: 0 }}>
+      
+      {/* 🔮 ISOLATION BOUNDARY: The 6.0s transition is wrapped strictly around this left container block */}
+      <div className="tv-photo-stage animate-cross-dissolve">
+        <div className="animate-kenburns" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(45px) brightness(16%)', transform: 'scale(1.15)', zIndex: 1 }} />
+        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderRadius: '16px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.85)', zIndex: 2 }}>
           <img className="animate-kenburns" src={imgUrl} alt="Live Stream" style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 3 }} />
         </div>
       </div>
-      <div className="tv-sidebar-stage" style={{ zIndex: 5, textAlign: 'center' }}>
+
+      {/* 🔒 STATIC ASSET ZONE: The right sidebar remains completely locked and un-animated */}
+      <div className="tv-sidebar-stage">
         <HeartBurstCanvas triggerToggle={burstTrigger} />
+        
         <img src="/Wedding1/gold-divider.png" alt="" style={{ width: 'calc(100% - 4px)', height: 'auto', marginTop: '-3px', marginBottom: '35px', mixBlendMode: 'screen', opacity: 0.95, zIndex: 3 }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '45px', zIndex: 3 }}>
           <img src="/Wedding1/couple-profile.png" style={{ width: '360px', height: '360px', borderRadius: '50%', objectFit: 'cover', border: '7px solid #d9bf8d', boxShadow: '0 20px 45px rgba(0,0,0,0.6)' }} alt="Profile" />
         </div>
-        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>{senderName}</span>
+        
+        <span style={{ color: '#d9bf8d', fontFamily: 'Georgia, serif', fontSize: '3.0rem', fontWeight: 'bold', display: 'block', letterSpacing: '1px', marginBottom: '24px', textShadow: '3px 3px 6px rgba(0,0,0,0.6)', zIndex: 4 }}>
+          {senderName}
+        </span>
+        
         <p style={{ color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '2.8rem', margin: 0, fontStyle: 'italic', fontWeight: '600', lineHeight: '1.4', maxWidth: '95%', textShadow: '2px 2px 5px rgba(0,0,0,0.9)', zIndex: 4 }}>
           {typedMessage ? `"${typedMessage}"` : ""}
         </p>
@@ -425,12 +450,13 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
     <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <style>{slideshowStyles}</style>
 
-      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH EXTRA-SLOW BLENDING */}
+      {/* 🖥️ VIEWPORT LAYER 1: WIDESCREEN TV WITH ISOLATED LEFT-SIDE TRANSITIONS */}
       {activeItem && <WeddingPhotoPlayer key={`tv-${activeItem.id}`} item={activeItem} liveEventId={liveEventId} burstTrigger={burstTrigger} />}
 
-      {/* 📱 VIEWPORT LAYER 2: MOBILE */}
+      {/* 📱 VIEWPORT LAYER 2: CLEAN SPLIT-SCREEN DASHBOARD (MOBILE) */}
       <div className="mobile-dashboard-layout" style={{ display: 'none' }}>
         
+        {/* 🟥 BOX 1: MOBILE TIMELINE FADE FRAME */}
         <div className="mobile-video-frame">
           {!mobileUrl ? (
             <div style={{ width: '100%', height: '100%', backgroundColor: '#0c0f12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', textAlign: 'center' }}>
@@ -445,12 +471,14 @@ export const WeddingSlideshowController = ({ liveEventId: passedEventId }) => {
           )}
         </div>
 
+        {/* ⬛ BOX 2: NAVIGATION DIVIDER BAR */}
         <div className="mobile-action-bar">
           <a href={`/${liveEventId}`} className="mobile-action-btn">
             📸 Click to Photo Upload Page
           </a>
         </div>
 
+        {/* ⬛ BOX 3: MESSAGES SCROLLING TIMELINE */}
         <div className="mobile-messages-feed">
           {mobileSortedGalleryItems.length === 0 ? (
             <div style={{ color: '#ffffff', opacity: 0.4, textAlign: 'center', padding: '30px', fontFamily: 'system-ui' }}>
