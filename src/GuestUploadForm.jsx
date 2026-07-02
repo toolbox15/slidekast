@@ -189,7 +189,7 @@ export default function GuestUploadForm({ eventId }) {
     setError("");
   }
 
-  if (status === "success") {
+  if (status === "success") {if (status === "success") {
     return (
       <main className="page-shell">
         <section className="form-card success-card">
@@ -208,14 +208,12 @@ export default function GuestUploadForm({ eventId }) {
           
           {/* Main Action Button */}
           <button className="primary-button" type="button" onClick={resetForm} style={{ marginBottom: '20px' }}>
-            {eventType === "Tom-Memorial" ? "Submit Another Memory" : "Submit Another Photo"}
+            {eventType.includes("Memorial") ? "Submit Another Memory" : "Submit Another Photo"}
           </button>
 
-          {/* 📱 1. RETURN TO MOBILE GALLERY / HOME LINK */}
-          <button 
-            className="secondary-button"
-            type="button" 
-            onClick={resetForm}
+          {/* 🖼️ 1. FIXED DIRECT LINK TO THE MULTI-PHOTO GALLERY GRID */}
+          <a 
+            href={`/gallery?liveEventId=${eventType}`}
             style={{
               display: 'block',
               width: '100%',
@@ -236,11 +234,11 @@ export default function GuestUploadForm({ eventId }) {
             }}
           >
             🖼️ Return to Gallery Roll
-          </button>
+          </a>
 
-          {/* 📺 2. LIVE DISPLAY SHORTCUT LINK */}
+          {/* 📺 2. FIXED DIRECT LINK TO THE WIDESCREEN CINEMATIC DISPLAY */}
           <a 
-            href={`/${eventType}?view=display`} 
+            href={`/gallery?view=display&liveEventId=${eventType}`} 
             target="_blank" 
             rel="noopener noreferrer"
             style={{
