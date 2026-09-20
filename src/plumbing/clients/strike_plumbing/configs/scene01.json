@@ -1,0 +1,99 @@
+{
+  "sceneId": "strike_plumbing_scene01",
+  "sceneName": "Team Introduction",
+  "fps": 24,
+  "durationInFrames": 144,
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "globalRules": {
+    "lockOriginalLayerPositions": true,
+    "preserveAspectRatio": true,
+    "allowIndependentLayerAnimation": true,
+    "noRandomMotion": true,
+    "noContinuousTextBouncing": true,
+    "noLensFlares": true,
+    "noArtificialDustParticles": true
+  },
+  "layers": [
+    {
+      "id": "headline",
+      "src": "clients/strike_plumbing/scene01/03_headline.png",
+      "zIndex": 20,
+      "locked": true,
+      "placement": {
+        "x": 0,
+        "y": 420,
+        "fit": "contain"
+      },
+      "animation": {
+        "type": "slide_up",
+        "startFrame": 20,
+        "durationInFrames": 14,
+        "opacity": {
+          "from": 0,
+          "to": 1
+        },
+        "translateY": {
+          "from": 30,
+          "to": 0
+        },
+        "easing": "easeOut"
+      }
+    },
+    {
+      "id": "footer_cta",
+      "src": "clients/strike_plumbing/scene01/04_footer_cta.png",
+      "zIndex": 30,
+      "locked": true,
+      "placement": {
+        "x": 0,
+        "y": 1580,
+        "fit": "contain"
+      },
+      "animation": {
+        "type": "impact_pop",
+        "startFrame": 48,
+        "durationInFrames": 12,
+        "opacity": {
+          "from": 0,
+          "to": 1
+        },
+        "scale": {
+          "from": 0.92,
+          "overshoot": 1.03,
+          "to": 1
+        },
+        "easing": "spring"
+      }
+    }
+  ],
+  "audio": {
+    "continuity": {
+      "restartMusic": false,
+      "continuesToNextScene": true
+    },
+    "voiceover": {
+      "src": "clients/strike_plumbing/audio/voiceover/scene01_vo.wav",
+      "script": "When things get out of hand, call Strike Plumbing."
+    }
+  },
+  "sceneMaster": {
+    "transitionOut": {
+      "type": "push_left",
+      "startFrame": 134,
+      "endFrame": 144,
+      "preserveAudioContinuity": true,
+      "translateX": {
+        "from": 0,
+        "to": -1080
+      },
+      "scale": {
+        "from": 1,
+        "to": 1.02
+      },
+      "easing": "easeInOut"
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "sceneId": "peak_air_scene05",
+  "sceneName": "Trusted Heating Experts",
+  "fps": 30,
+  "durationInFrames": 180,
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "globalRules": {
+    "lockOriginalLayerPositions": true,
+    "preserveAspectRatio": true,
+    "allowIndependentLayerAnimation": true,
+    "noRandomMotion": true,
+    "noContinuousTextBouncing": true,
+    "noLensFlares": true,
+    "noArtificialDustParticles": true
+  },
+  "layers": [
+    {
+      "id": "background",
+      "src": "clients/peak_air/scene05/01_background.mp4",
+      "zIndex": 0,
+      "locked": true,
+      "animation": {
+        "type": "none"
+      }
+    },
+    {
+      "id": "trusted_heating_experts",
+      "src": "clients/peak_air/scene05/02_trusted_heating_experts.png",
+      "zIndex": 20,
+      "locked": true,
+      "animation": {
+        "type": "impact_pop",
+        "startFrame": 10,
+        "durationInFrames": 12,
+        "opacity": {
+          "from": 0,
+          "to": 1
+        },
+        "scale": {
+          "from": 0.9,
+          "overshoot": 1.05,
+          "to": 1.0
+        },
+        "easing": "spring"
+      }
+    },
+    {
+      "id": "same_day_service",
+      "src": "clients/peak_air/scene05/03_same_day_service.png",
+      "zIndex": 30,
+      "locked": true,
+      "animation": {
+        "type": "slide_up",
+        "startFrame": 44,
+        "durationInFrames": 14,
+        "opacity": {
+          "from": 0,
+          "to": 1
+        },
+        "translateY": {
+          "from": 30,
+          "to": 0
+        },
+        "easing": "easeOut"
+      }
+    },
+    {
+      "id": "service_rail",
+      "src": "clients/peak_air/scene05/04_service_rail.png",
+      "zIndex": 40,
+      "locked": true,
+      "animation": {
+        "type": "none"
+      }
+    },
+    {
+      "id": "footer_base",
+      "src": "clients/peak_air/scene05/05_footer_base.png",
+      "zIndex": 50,
+      "locked": true,
+      "animation": {
+        "type": "none"
+      }
+    },
+    {
+      "id": "phone_number",
+      "src": "clients/peak_air/scene05/06_phone_number.png",
+      "zIndex": 60,
+      "locked": true,
+      "animation": {
+        "type": "impact_pop",
+        "startFrame": 82,
+        "durationInFrames": 12,
+        "opacity": {
+          "from": 0,
+          "to": 1
+        },
+        "scale": {
+          "from": 0.9,
+          "overshoot": 1.05,
+          "to": 1.0
+        },
+        "easing": "spring"
+      }
+    }
+  ],
+  "audio": {
+    "continuity": {
+      "restartMusic": false,
+      "continuesFromPreviousScene": true,
+      "previousSceneId": "peak_air_scene04"
+    },
+    "voiceover": {
+      "src": "clients/peak_air/audio/voiceover/scene05_vo.wav",
+      "script": "Trusted heating experts. Same-day service from licensed local pros."
+    }
+  },
+  "sceneMaster": {
+    "transitionOut": {
+      "type": "none",
+      "startFrame": 180,
+      "endFrame": 180,
+      "preserveAudioContinuity": true
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "sceneId": "strike_plumbing_scene04",
+  "sceneName": "Trust & Proof / Guarantee",
+  "fps": 24,
+  "durationInFrames": 144,
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "globalRules": {
+    "lockOriginalLayerPositions": true,
+    "preserveAspectRatio": true,
+    "allowIndependentLayerAnimation": true,
+    "noRandomMotion": true,
+    "noContinuousTextBouncing": true,
+    "noLensFlares": true,
+    "noArtificialDustParticles": true
+  },
+  "layers": [
+    {
+      "id": "background",
+      "src": "clients/strike_plumbing/scene03/Water_flowing_from_faucet.mp4",
+      "zIndex": 0,
+      "locked": true,
+      "placement": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "fit": "cover"
+      },
+      "animation": {
+        "type": "none"
+      }
+    }
+  ],
+  "audio": {
+    "continuity": {
+      "restartMusic": false,
+      "continuesToNextScene": true
+    },
+    "voiceover": {
+      "src": "clients/strike_plumbing/audio/voiceover/scene04_vo.wav",
+      "script": "Backed by hundreds of five-star reviews and our one-hundred percent satisfaction guarantee."
+    }
+  },
+  "sceneMaster": {
+    "transitionOut": {
+      "type": "none"
+    }
+  }
+}

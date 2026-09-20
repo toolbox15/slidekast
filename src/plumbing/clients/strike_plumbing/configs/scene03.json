@@ -1,0 +1,52 @@
+{
+  "sceneId": "strike_plumbing_scene03",
+  "sceneName": "Fast Diagnosis / Solution",
+  "fps": 24,
+  "durationInFrames": 144,
+  "canvas": {
+    "width": 1080,
+    "height": 1920
+  },
+  "globalRules": {
+    "lockOriginalLayerPositions": true,
+    "preserveAspectRatio": true,
+    "allowIndependentLayerAnimation": true,
+    "noRandomMotion": true,
+    "noContinuousTextBouncing": true,
+    "noLensFlares": true,
+    "noArtificialDustParticles": true
+  },
+  "layers": [
+    {
+      "id": "background",
+      "src": "clients/strike_plumbing/scene03/Water_flowing_from_faucet.mp4",
+      "zIndex": 0,
+      "locked": true,
+      "placement": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920,
+        "fit": "cover"
+      },
+      "animation": {
+        "type": "none"
+      }
+    }
+  ],
+  "audio": {
+    "continuity": {
+      "restartMusic": false,
+      "continuesToNextScene": true
+    },
+    "voiceover": {
+      "src": "clients/strike_plumbing/audio/voiceover/scene03_vo.wav",
+      "script": "We find it fast, give you an honest diagnosis, and get your water flowing right."
+    }
+  },
+  "sceneMaster": {
+    "transitionOut": {
+      "type": "none"
+    }
+  }
+}

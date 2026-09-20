@@ -1,0 +1,81 @@
+{
+  "projectId": "peak_air",
+  "projectName": "Peak Air HVAC 30 Second Vertical Ad",
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "durationInFrames": 900,
+  "mediaRoot": "clients/peak_air",
+  "scenes": [
+    {
+      "id": "scene01",
+      "name": "No Heat",
+      "config": "./configs/scene01.json",
+      "startFrame": 0,
+      "durationInFrames": 180
+    },
+    {
+      "id": "scene02",
+      "name": "Warmth Restored",
+      "config": "./configs/scene02.json",
+      "startFrame": 180,
+      "durationInFrames": 180
+    },
+    {
+      "id": "scene03",
+      "name": "We Find It Fast",
+      "config": "./configs/scene03.json",
+      "startFrame": 360,
+      "durationInFrames": 180
+    },
+    {
+      "id": "scene04",
+      "name": "Book Today",
+      "config": "./configs/scene04.json",
+      "startFrame": 540,
+      "durationInFrames": 180
+    },
+    {
+      "id": "scene05",
+      "name": "Trusted Heating Experts",
+      "config": "./configs/scene05.json",
+      "startFrame": 720,
+      "durationInFrames": 180
+    }
+  ],
+  "audio": {
+    "music": {
+      "src": "clients/peak_air/audio/music/peak_air_music.wav",
+      "startFrame": 0,
+      "volume": 0.55,
+      "ducking": {
+        "enabled": true,
+        "duckedVolume": 0.22,
+        "attackFrames": 6,
+        "releaseFrames": 10
+      }
+    },
+    "voiceovers": [
+      {
+        "sceneId": "scene01",
+        "src": "clients/peak_air/audio/voiceover/scene01_vo.wav"
+      },
+      {
+        "sceneId": "scene02",
+        "src": "clients/peak_air/audio/voiceover/scene02_vo.wav"
+      },
+      {
+        "sceneId": "scene03",
+        "src": "clients/peak_air/audio/voiceover/scene03_vo.wav"
+      },
+      {
+        "sceneId": "scene04",
+        "src": "clients/peak_air/audio/voiceover/scene04_vo.wav"
+      },
+      {
+        "sceneId": "scene05",
+        "src": "clients/peak_air/audio/voiceover/scene05_vo.wav"
+      }
+    ]
+  }
+}
