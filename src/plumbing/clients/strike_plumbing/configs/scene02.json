@@ -1,0 +1,124 @@
+﻿{
+    "sceneId":  "strike_plumbing_scene02",
+    "sceneName":  "Plumbing Problem Callout",
+    "fps":  24,
+    "durationInFrames":  144,
+    "canvas":  {
+                   "width":  1080,
+                   "height":  1920
+               },
+    "globalRules":  {
+                        "lockOriginalLayerPositions":  true,
+                        "preserveAspectRatio":  true,
+                        "allowIndependentLayerAnimation":  true,
+                        "noRandomMotion":  true,
+                        "noContinuousTextBouncing":  true,
+                        "noLensFlares":  true,
+                        "noArtificialDustParticles":  true
+                    },
+    "layers":  [
+                   {
+                       "id":  "background",
+                       "src":  "clients/strike_plumbing/scene02/01_background.mp4",
+                       "zIndex":  0,
+                       "locked":  true,
+                       "placement":  {
+                                         "x":  0,
+                                         "y":  0,
+                                         "width":  1080,
+                                         "height":  1920,
+                                         "fit":  "cover"
+                                     },
+                       "animation":  {
+                                         "type":  "none"
+                                     }
+                   },
+                   {
+                       "id":  "headline",
+                       "src":  "clients/strike_plumbing/scene02/04_headline.png",
+                       "zIndex":  20,
+                       "locked":  false,
+                       "placement":  {
+                                         "x":  0,
+                                         "y":  0,
+                                         "width":  1080,
+                                         "height":  1920,
+                                         "fit":  "contain"
+                                     },
+                       "animation":  {
+                                         "type":  "impact_pop",
+                                         "startFrame":  10,
+                                         "durationInFrames":  10,
+                                         "opacity":  {
+                                                         "from":  0,
+                                                         "to":  1
+                                                     },
+                                         "scale":  {
+                                                       "from":  1.15,
+                                                       "overshoot":  0.98,
+                                                       "to":  1
+                                                   },
+                                         "easing":  "spring"
+                                     }
+                   },
+                   {
+                       "id":  "warning_text",
+                       "src":  "clients/strike_plumbing/scene02/06_warning_text.png",
+                       "zIndex":  40,
+                       "locked":  false,
+                       "placement":  {
+                                         "x":  0,
+                                         "y":  0,
+                                         "width":  1080,
+                                         "height":  1920,
+                                         "fit":  "contain"
+                                     },
+                       "animation":  {
+                                         "type":  "slide_up",
+                                         "startFrame":  56,
+                                         "durationInFrames":  12,
+                                         "opacity":  {
+                                                         "from":  0,
+                                                         "to":  1
+                                                     },
+                                         "translateY":  {
+                                                            "from":  35,
+                                                            "to":  0
+                                                        },
+                                         "scale":  {
+                                                       "from":  0.92,
+                                                       "overshoot":  1.03,
+                                                       "to":  1
+                                                   },
+                                         "easing":  "spring"
+                                     }
+                   }
+               ],
+    "audio":  {
+                  "continuity":  {
+                                     "restartMusic":  false,
+                                     "continuesToNextScene":  true
+                                 },
+                  "voiceover":  {
+                                    "src":  "clients/strike_plumbing/audio/voiceover/scene02_vo.wav",
+                                    "script":  "Plumbing problem? Clogged drains, leaking pipes, or overflowing sinksâ€”we fix it fast."
+                                }
+              },
+    "sceneMaster":  {
+                        "transitionOut":  {
+                                              "type":  "push_left",
+                                              "startFrame":  134,
+                                              "endFrame":  144,
+                                              "preserveAudioContinuity":  true,
+                                              "translateX":  {
+                                                                 "from":  0,
+                                                                 "to":  -1080
+                                                             },
+                                              "scale":  {
+                                                            "from":  1,
+                                                            "to":  1.02
+                                                        },
+                                              "easing":  "easeInOut"
+                                          }
+                    }
+}
