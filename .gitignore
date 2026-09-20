@@ -5,3 +5,23 @@ dist
 
 # Ignore the output video from Git but not videos you import into src/.
 out
+
+.vercel
+.env*
+
+build
+# Model weights and temporary video outputs
+yolov8n.pt
+*.mp4
+*.mov
+transcript.txt
+
+# Media renders and models
+*.mp4
+*.mov
+yolov8n.pt
+transcript.txt
+
+# Temp backups and dumps
+*.zip
+*.log
